@@ -65,7 +65,7 @@ ${transcript}`;
         {
           role: "system",
           content:
-            "Sei un assistente esperto nel riassumere video. Il seguente input contiene prima la descrizione del video e poi la sua trascrizione. Crea un riassunto conciso ma informativo combinando le informazioni da entrambe le fonti, in massimo 10 righe di testo. Il riassunto deve catturare i punti principali e mantenere il tono originale del contenuto.",
+            "Sei un assistente esperto nel riassumere video. Il seguente input contiene prima la descrizione del video e poi la sua trascrizione. Crea un riassunto conciso ma informativo **in italiano**, combinando le informazioni da entrambe le fonti, in massimo 10 righe di testo. Il riassunto deve catturare i punti principali e mantenere il tono originale del contenuto.",
         },
         {
           role: "user",
@@ -165,15 +165,16 @@ async function generateAudioSummary(
   }
   try {
     // Construct filename from provided channel and title
-    const speechFile = path.resolve(`./${channel}-${title}.mp3`);
+    const speechFile = path.resolve(`./summaries/${channel}-${title}.mp3`);
 
     const voiceId = "W71zT1VwIFFx3mMGH2uZ";
-    const modelId = "eleven_multilingual_v2";
+    const modelId = "eleven_turbo_v2_5";
 
     const audioStream = await elevenlabs.generate({
       voice: voiceId,
       text: summary,
       model_id: modelId,
+      language_code: "it",
     });
 
     const fileStream = fs.createWriteStream(speechFile);
