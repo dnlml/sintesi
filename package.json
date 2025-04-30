@@ -19,10 +19,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@distube/ytdl-core": "^4.16.8",
+    "@distube/ytdl-core": "^4.16.9",
     "dotenv": "^16.4.7",
     "elevenlabs": "^1.55.0",
-    "openai": "^4.90.0",
+    "openai": "^4.96.2",
     "youtube-transcript": "^1.2.1"
   },
   "devDependencies": {

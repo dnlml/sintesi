@@ -8,6 +8,7 @@ import ytdl from "@distube/ytdl-core";
 
 // Carica le variabili d'ambiente dal file .env
 dotenv.config();
+const MAX_SUMMARY_LINE_LENGTH = 30;
 
 // Verifica che le API key siano presenti
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
@@ -64,15 +65,14 @@ ${transcript}`;
       messages: [
         {
           role: "system",
-          content:
-            "Sei un assistente esperto nel riassumere video. Il seguente input contiene prima la descrizione del video e poi la sua trascrizione. Crea un riassunto conciso ma informativo **in italiano**, combinando le informazioni da entrambe le fonti, in massimo 10 righe di testo. Il riassunto deve catturare i punti principali e mantenere il tono originale del contenuto.",
+          content: `Sei un assistente esperto nel riassumere video. Il seguente input contiene prima la descrizione del video e poi la sua trascrizione. Crea un riassunto conciso ma informativo **in italiano**, combinando le informazioni da entrambe le fonti, in massimo ${MAX_SUMMARY_LINE_LENGTH} righe di testo. Il riassunto deve catturare i punti principali e mantenere il tono originale del contenuto.`,
         },
         {
           role: "user",
-          content: `Riassumi questo contenuto (descrizione e trascrizione) in massimo 10 righe. Non cominciare con 'In questo video...' o 'In questo video si parla di...', vai direttamente al punto.:\n\n${combinedContent}`,
+          content: `Riassumi questo contenuto (descrizione e trascrizione) in massimo ${MAX_SUMMARY_LINE_LENGTH} righe. Non cominciare con 'In questo video...' o 'In questo video si parla di...', vai direttamente al punto.:\n\n${combinedContent}`,
         },
       ],
-      model: "gpt-3.5-turbo",
+      model: "gpt-4.1-mini",
       temperature: 0.7,
       max_tokens: 500,
     });
