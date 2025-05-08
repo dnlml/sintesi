@@ -15,7 +15,7 @@ This project is a Node.js application written in TypeScript that retrieves the t
 1. Clone the repository:
    ```bash
    git clone <repository-url>
-   cd yt-scraper
+   cd yt-summarizer
    ```
 2. Install dependencies:
    ```bash
