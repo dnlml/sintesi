@@ -38,14 +38,6 @@ Replace `<youtube_video_url>` with the full URL of the YouTube video.
 pnpm summarize https://www.youtube.com/watch?v=dQw4w9WgXcQ
 ```
 
-### Development Mode
-
-To run the application in watch mode (automatically restarts on file changes):
-
-```bash
-pnpm run dev <youtube_video_url>
-```
-
 ## How it works
 
 1. The application takes the video URL as a command line argument.

@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc",
     "summarize": "tsx src/index.ts",
-    "dev": "tsx watch src/index.ts"
+    "prepare": "pnpm run build"
   },
   "keywords": [
     "youtube",
