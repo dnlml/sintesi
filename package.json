@@ -1,12 +1,12 @@
 {
-  "name": "yt-scraper",
+  "name": "yt-summarizer",
   "version": "1.0.0",
   "description": "A Node.js app to fetch YouTube video transcripts and generate summaries.",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "start": "tsx src/index.ts",
+    "summarize": "tsx src/index.ts",
     "dev": "tsx watch src/index.ts"
   },
   "keywords": [
@@ -16,10 +16,10 @@
     "typescript",
     "node"
   ],
-  "author": "",
+  "author": "Daniele Meli",
   "license": "ISC",
   "dependencies": {
-    "@distube/ytdl-core": "^4.16.9",
+    "@distube/ytdl-core": "^4.16.10",
     "dotenv": "^16.4.7",
     "elevenlabs": "^1.55.0",
     "openai": "^4.96.2",
@@ -29,5 +29,17 @@
     "@types/node": "^20.14.10",
     "tsx": "^4.16.2",
     "typescript": "^5.5.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dnlml/yt-summarizer"
+  },
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "bin": {
+    "yt-summarizer": "dist/index.js"
   }
 }

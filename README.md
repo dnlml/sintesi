@@ -1,57 +1,64 @@
-# YouTube Transcript Summarizer
+# YouTube Summarizer
 
-Questo progetto è un'applicazione Node.js scritta in TypeScript che recupera il transcript di un video YouTube e ne genera un riassunto.
+This project is a Node.js application written in TypeScript that retrieves the transcript of a YouTube video and generates a summary.
 
-## Prerequisiti
+## Prerequisites
 
-- Node.js (v23 o superiore consigliato per l'esecuzione diretta di `.ts`)
-- pnpm (o npm/yarn)
+- Node.js (v23 or higher recommended for direct execution of `.ts` files)
+- pnpm (or npm/yarn)
+- A `.env` file in the project root with the following variables:
+  - `ELEVENLABS_API_KEY`
+  - `OPENAI_API_KEY`
 
-## Installazione
+## Installation
 
-1. Clona il repository:
+1. Clone the repository:
    ```bash
    git clone <repository-url>
    cd yt-scraper
    ```
-2. Installa le dipendenze:
+2. Install dependencies:
    ```bash
    pnpm install
    ```
 
-## Utilizzo
+## Usage
 
-Per ottenere il riassunto di un video, esegui:
-
-```bash
-pnpm start <youtube_video_url>
-```
-
-Sostituisci `<youtube_video_url>` con l'URL completo del video YouTube.
-
-**Esempio:**
+To get a summary of a video, run:
 
 ```bash
-pnpm start https://www.youtube.com/watch?v=dQw4w9WgXcQ
+pnpm summarize <youtube_video_url>
 ```
 
-### Modalità di sviluppo
+Replace `<youtube_video_url>` with the full URL of the YouTube video.
 
-Per eseguire l'applicazione in modalità watch (riavvio automatico in caso di modifiche ai file):
+**Example:**
+
+```bash
+pnpm summarize https://www.youtube.com/watch?v=dQw4w9WgXcQ
+```
+
+### Development Mode
+
+To run the application in watch mode (automatically restarts on file changes):
 
 ```bash
 pnpm run dev <youtube_video_url>
 ```
 
-## Funzionamento
+## How it works
 
-1. L'applicazione prende l'URL del video come argomento da linea di comando.
-2. Utilizza la libreria `youtube-transcript` per scaricare il transcript del video.
-3. **(Placeholder)** Genera un riassunto mostrando le prime 10 righe del transcript.
-4. Stampa il riassunto sulla console.
+1. The application takes the video URL as a command line argument.
+2. It uses the `youtube-transcript` library to download the video transcript.
+3. **(Placeholder)** Generates a summary by showing the first 10 lines of the transcript.
+4. Prints the summary to the console.
 
-## Prossimi passi
+## Next steps
 
-- Integrare un modello linguistico (LLM) per generare riassunti più accurati e concisi invece del placeholder.
-- Aggiungere gestione degli errori più robusta.
-- Opzioni per personalizzare la lunghezza del riassunto.
+- Integrate a language model (LLM) to generate more accurate and concise summaries instead of the placeholder.
+- Add more robust error handling.
+- Options to customize the summary length.
+
+---
+
+> **Note:** This application is currently localized only in Italian.

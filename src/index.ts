@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { YoutubeTranscript, TranscriptResponse } from "youtube-transcript";
 import OpenAI from "openai";
 import { ElevenLabsClient } from "elevenlabs";
@@ -6,11 +7,11 @@ import * as fs from "fs";
 import * as path from "path";
 import ytdl from "@distube/ytdl-core";
 
-// Carica le variabili d'ambiente dal file .env
+// Load environment variables from .env file
 dotenv.config();
 const MAX_SUMMARY_LINE_LENGTH = 30;
 
-// Verifica che le API key siano presenti
+// Check that API keys are present
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 if (!OPENAI_API_KEY) {
   console.error("Error: OPENAI_API_KEY not found in .env file");
