@@ -1,4 +1,12 @@
 {
-	"$schema": "https://inlang.com/schema/inlang-message-format",
-	"hello_world": "Hello, {name} from it!"
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "summary_title": "Riassunto",
+  "summary_placeholder": "Inserisci l'URL del video YouTube",
+  "summary_button": "Genera riassunto",
+  "summary_download_audio": "Scarica o ascolta audio",
+  "summary_audio_downloaded": "Audio scaricato con successo",
+  "summary_length_label": "Lunghezza del riassunto",
+  "length_short": "Corto",
+  "length_medium": "Medio",
+  "length_long": "Lungo"
 }

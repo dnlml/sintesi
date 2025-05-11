@@ -1,6 +1,10 @@
 <script lang="ts">
-  export let form: { summary?: string; audioPath?: string; error?: string } | undefined;
-  let url = '';
+  import { m } from '$lib/paraglide/messages.js';
+
+  let { form }: { form?: { summary?: string; audioPath?: string; error?: string } } = $props();
+  let url = $state('');
+  let selectedLanguage = $state('it');
+  let selectedSummaryLength = $state('medium');
 </script>
 
 <div
@@ -8,24 +12,60 @@
 >
   <div class="w-full max-w-lg rounded-2xl border border-blue-100 bg-white/90 p-8 shadow-xl">
     <h1 class="mb-6 text-center text-3xl font-extrabold tracking-tight text-blue-800">
-      Riassunto YouTube
+      {m.summary_title()}
     </h1>
     <form method="post" class="space-y-5">
-      <label for="url" class="block font-semibold text-blue-700">YouTube URL</label>
-      <input
-        id="url"
-        name="url"
-        type="url"
-        bind:value={url}
-        required
-        placeholder="https://www.youtube.com/watch?v=..."
-        class="w-full rounded-lg border border-blue-200 px-3 py-2 text-lg transition focus:ring-2 focus:ring-blue-400 focus:outline-none"
-      />
+      <div>
+        <label for="url" class="block font-semibold text-blue-700">{m.summary_placeholder()}</label>
+        <input
+          id="url"
+          name="url"
+          type="url"
+          bind:value={url}
+          required
+          placeholder={m.summary_placeholder()}
+          class="w-full rounded-lg border border-blue-200 px-3 py-2 text-lg transition focus:ring-2 focus:ring-blue-400 focus:outline-none"
+        />
+      </div>
+
+      <div>
+        <label for="language" class="block font-semibold text-blue-700">Audio Language</label>
+        <!-- Etichetta temporanea in inglese -->
+        <select
+          id="language"
+          name="language"
+          bind:value={selectedLanguage}
+          class="w-full rounded-lg border border-blue-200 px-3 py-2 text-lg transition focus:ring-2 focus:ring-blue-400 focus:outline-none"
+        >
+          <option value="it">Italiano</option>
+          <option value="en">English</option>
+          <option value="fr">Français</option>
+          <option value="es">Español</option>
+          <option value="de">Deutsch</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="summaryLength" class="block font-semibold text-blue-700"
+          >{m.summary_length_label()}</label
+        >
+        <select
+          id="summaryLength"
+          name="summaryLength"
+          bind:value={selectedSummaryLength}
+          class="w-full rounded-lg border border-blue-200 px-3 py-2 text-lg transition focus:ring-2 focus:ring-blue-400 focus:outline-none"
+        >
+          <option value="short">{m.length_short()}</option>
+          <option value="medium">{m.length_medium()}</option>
+          <option value="long">{m.length_long()}</option>
+        </select>
+      </div>
+
       <button
         type="submit"
-        class="w-full rounded-lg bg-gradient-to-r from-blue-600 to-indigo-500 px-4 py-2 text-lg font-semibold text-white shadow transition hover:from-blue-700 hover:to-indigo-600"
+        class="w-full cursor-pointer rounded-lg bg-gradient-to-r from-blue-600 to-indigo-500 px-4 py-2 text-lg font-semibold text-white shadow transition hover:from-blue-700 hover:to-indigo-600"
       >
-        Genera riassunto
+        {m.summary_button()}
       </button>
     </form>
 
@@ -39,7 +79,7 @@
 
     {#if form?.summary}
       <div class="animate-fade-in mt-8">
-        <h2 class="mb-3 text-center text-xl font-bold text-indigo-700">Riassunto</h2>
+        <h2 class="mb-3 text-center text-xl font-bold text-indigo-700">{m.summary_title()}</h2>
         <pre
           class="rounded-xl border border-blue-100 bg-blue-50 p-4 text-base whitespace-pre-wrap text-gray-800 shadow-inner">
 {form.summary}
@@ -51,7 +91,7 @@
               target="_blank"
               class="inline-block rounded-lg bg-indigo-600 px-6 py-2 font-semibold text-white shadow transition hover:bg-indigo-700"
             >
-              Scarica o ascolta audio
+              {m.summary_download_audio()}
             </a>
           </div>
         {/if}

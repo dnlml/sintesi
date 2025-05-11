@@ -3,11 +3,18 @@ import { processYoutubeUrl } from '$lib/processYoutubeUrl';
 
 export const POST: RequestHandler = async ({ request }) => {
   try {
-    const { url } = await request.json();
+    const { url, language, summaryLength } = await request.json();
     if (!url || typeof url !== 'string') {
       return json({ error: 'Missing or invalid url' }, { status: 400 });
     }
-    const result = await processYoutubeUrl(url);
+    if (!language || typeof language !== 'string') {
+      return json({ error: 'Missing or invalid language' }, { status: 400 });
+    }
+    if (!summaryLength || typeof summaryLength !== 'string') {
+      return json({ error: 'Missing or invalid summary length' }, { status: 400 });
+    }
+
+    const result = await processYoutubeUrl(url, language, summaryLength);
     return json(result);
   } catch (error) {
     return json(

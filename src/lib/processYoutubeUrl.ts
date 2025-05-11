@@ -9,7 +9,9 @@ import ytdl from '@distube/ytdl-core';
 
 // Load environment variables from .env file
 dotenv.config();
-const MAX_SUMMARY_LINE_LENGTH = 30;
+const MAX_SUMMARY_LINE_LENGTH_MEDIUM = 30;
+const MAX_SUMMARY_LINE_LENGTH_SHORT = 10;
+const MAX_SUMMARY_LINE_LENGTH_LONG = 85;
 
 // Check that API keys are present
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
@@ -22,6 +24,13 @@ if (!ELEVENLABS_API_KEY) {
   console.error('Error: ELEVENLABS_API_KEY not found in .env file');
   process.exit(1);
 }
+
+// Definizione della mappa per la lunghezza del riassunto
+const summaryLengthMap: { [key: string]: number } = {
+  short: MAX_SUMMARY_LINE_LENGTH_SHORT,
+  medium: MAX_SUMMARY_LINE_LENGTH_MEDIUM,
+  long: MAX_SUMMARY_LINE_LENGTH_LONG
+};
 
 const openai = new OpenAI({
   apiKey: OPENAI_API_KEY,
@@ -47,8 +56,24 @@ async function getTranscript(url: string): Promise<string> {
   }
 }
 
-async function summarizeTranscript(transcript: string, description: string): Promise<string> {
-  console.log('Generating summary using OpenAI...');
+async function summarizeTranscript(
+  transcript: string,
+  description: string,
+  language: string,
+  summaryLengthValue: number
+): Promise<string> {
+  console.log(
+    `Generating summary using OpenAI in language: ${language} with length value: ${summaryLengthValue}...`
+  );
+
+  const languageMap: { [key: string]: string } = {
+    it: 'italiano',
+    en: 'inglese',
+    fr: 'francese',
+    es: 'spagnolo',
+    de: 'tedesco'
+  };
+  const targetLanguageName = languageMap[language] || 'italiano';
 
   const combinedContent = `Descrizione del video:
 ${description}
@@ -61,11 +86,11 @@ ${transcript}`;
       messages: [
         {
           role: 'system',
-          content: `Sei un assistente esperto nel riassumere video. Il seguente input contiene prima la descrizione del video e poi la sua trascrizione. Crea un riassunto conciso ma informativo **in italiano**, combinando le informazioni da entrambe le fonti, in massimo ${MAX_SUMMARY_LINE_LENGTH} righe di testo. Il riassunto deve catturare i punti principali e mantenere il tono originale del contenuto.`
+          content: `Sei un assistente esperto nel riassumere video. Il seguente input contiene prima la descrizione del video e poi la sua trascrizione. Crea un riassunto conciso ma informativo **in ${targetLanguageName}**, combinando le informazioni da entrambe le fonti, in massimo ${summaryLengthValue} righe di testo. Il riassunto deve catturare i punti principali e mantenere il tono originale del contenuto.`
         },
         {
           role: 'user',
-          content: `Riassumi questo contenuto (descrizione e trascrizione) in massimo ${MAX_SUMMARY_LINE_LENGTH} righe. Non cominciare con 'In questo video...' o 'In questo video si parla di...', vai direttamente al punto.:\n\n${combinedContent}`
+          content: `Riassumi questo contenuto (descrizione e trascrizione) in massimo ${summaryLengthValue} righe **in ${targetLanguageName}**. Non cominciare con 'In questo video...' o 'In questo video si parla di...', vai direttamente al punto.:\n\n${combinedContent}`
         }
       ],
       model: 'gpt-4.1-mini',
@@ -159,9 +184,10 @@ async function readableStreamToBuffer(readableStream: ReadableStream<Uint8Array>
 async function generateAudioSummary(
   summary: string,
   channel: string,
-  title: string
+  title: string,
+  language: string
 ): Promise<void> {
-  console.log('Generating audio summary using ElevenLabs library...');
+  console.log(`Generating audio summary using ElevenLabs library in language: ${language}...`);
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) {
     console.error('ElevenLabs API key is missing.');
@@ -176,7 +202,7 @@ async function generateAudioSummary(
     const audio = await elevenlabs.textToSpeech.convert(voiceId, {
       text: summary,
       model_id: modelId,
-      language_code: 'it'
+      language_code: language
     });
 
     console.log('audio type:', typeof audio, audio.constructor?.name);
@@ -222,18 +248,27 @@ async function generateAudioSummary(
 }
 
 export async function processYoutubeUrl(
-  videoUrl: string
+  videoUrl: string,
+  language: string,
+  summaryLengthKey: string
 ): Promise<{ summary: string; audioPath: string }> {
   // Get transcript and metadata (including description)
   const transcript = await getTranscript(videoUrl);
   const metadata = await getVideoMetadata(videoUrl); // Get metadata once
   const cleanedDescription = cleanDescription(metadata.description);
 
-  // Generate summary using transcript and cleaned description
-  const summary = await summarizeTranscript(transcript, cleanedDescription);
+  const summaryLengthValue = summaryLengthMap[summaryLengthKey] || MAX_SUMMARY_LINE_LENGTH_MEDIUM;
 
-  // Pass summary, channel, and title to generateAudioSummary
-  await generateAudioSummary(summary, metadata.channel, metadata.title);
+  // Generate summary using transcript and cleaned description
+  const summary = await summarizeTranscript(
+    transcript,
+    cleanedDescription,
+    language,
+    summaryLengthValue
+  );
+
+  // Pass summary, channel, title, and language to generateAudioSummary
+  await generateAudioSummary(summary, metadata.channel, metadata.title, language);
 
   // Return summary and audio file path
   return {
