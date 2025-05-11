@@ -5,6 +5,13 @@
   let url = $state('');
   let selectedLanguage = $state('it');
   let selectedSummaryLength = $state('medium');
+  let loading = $state(false);
+
+  $effect(() => {
+    if (form?.summary || form?.error) {
+      loading = false;
+    }
+  });
 </script>
 
 <div
@@ -14,7 +21,13 @@
     <h1 class="mb-6 text-center text-3xl font-extrabold tracking-tight text-blue-800">
       {m.summary_title()}
     </h1>
-    <form method="post" class="space-y-5">
+    <form
+      method="post"
+      class="space-y-5"
+      onsubmit={() => {
+        loading = true;
+      }}
+    >
       <div>
         <label for="url" class="block font-semibold text-blue-700">{m.summary_placeholder()}</label>
         <input
@@ -63,9 +76,10 @@
 
       <button
         type="submit"
-        class="w-full cursor-pointer rounded-lg bg-gradient-to-r from-blue-600 to-indigo-500 px-4 py-2 text-lg font-semibold text-white shadow transition hover:from-blue-700 hover:to-indigo-600"
+        class="w-full cursor-pointer rounded-lg bg-gradient-to-r from-blue-600 to-indigo-500 px-4 py-2 text-lg font-semibold text-white shadow transition hover:from-blue-700 hover:to-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+        disabled={loading}
       >
-        {m.summary_button()}
+        {loading ? 'Loading...' : m.summary_button()}
       </button>
     </form>
 
