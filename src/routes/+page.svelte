@@ -40,40 +40,40 @@
           class="w-full rounded-lg border border-blue-200 px-3 py-2 text-lg transition focus:ring-2 focus:ring-blue-400 focus:outline-none"
         />
       </div>
+      {#if !loading}
+        <div>
+          <label for="language" class="block font-semibold text-blue-700">Audio Language</label>
+          <!-- Etichetta temporanea in inglese -->
+          <select
+            id="language"
+            name="language"
+            bind:value={selectedLanguage}
+            class="w-full rounded-lg border border-blue-200 px-3 py-2 text-lg transition focus:ring-2 focus:ring-blue-400 focus:outline-none"
+          >
+            <option value="it">Italiano</option>
+            <option value="en">English</option>
+            <option value="fr">Français</option>
+            <option value="es">Español</option>
+            <option value="de">Deutsch</option>
+          </select>
+        </div>
 
-      <div>
-        <label for="language" class="block font-semibold text-blue-700">Audio Language</label>
-        <!-- Etichetta temporanea in inglese -->
-        <select
-          id="language"
-          name="language"
-          bind:value={selectedLanguage}
-          class="w-full rounded-lg border border-blue-200 px-3 py-2 text-lg transition focus:ring-2 focus:ring-blue-400 focus:outline-none"
-        >
-          <option value="it">Italiano</option>
-          <option value="en">English</option>
-          <option value="fr">Français</option>
-          <option value="es">Español</option>
-          <option value="de">Deutsch</option>
-        </select>
-      </div>
-
-      <div>
-        <label for="summaryLength" class="block font-semibold text-blue-700"
-          >{m.summary_length_label()}</label
-        >
-        <select
-          id="summaryLength"
-          name="summaryLength"
-          bind:value={selectedSummaryLength}
-          class="w-full rounded-lg border border-blue-200 px-3 py-2 text-lg transition focus:ring-2 focus:ring-blue-400 focus:outline-none"
-        >
-          <option value="short">{m.length_short()}</option>
-          <option value="medium">{m.length_medium()}</option>
-          <option value="long">{m.length_long()}</option>
-        </select>
-      </div>
-
+        <div>
+          <label for="summaryLength" class="block font-semibold text-blue-700"
+            >{m.summary_length_label()}</label
+          >
+          <select
+            id="summaryLength"
+            name="summaryLength"
+            bind:value={selectedSummaryLength}
+            class="w-full rounded-lg border border-blue-200 px-3 py-2 text-lg transition focus:ring-2 focus:ring-blue-400 focus:outline-none"
+          >
+            <option value="short">{m.length_short()}</option>
+            <option value="medium">{m.length_medium()}</option>
+            <option value="long">{m.length_long()}</option>
+          </select>
+        </div>
+      {/if}
       <button
         type="submit"
         class="w-full cursor-pointer rounded-lg bg-gradient-to-r from-blue-600 to-indigo-500 px-4 py-2 text-lg font-semibold text-white shadow transition hover:from-blue-700 hover:to-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
