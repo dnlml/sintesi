@@ -144,6 +144,17 @@ function cleanDescription(description: string): string {
   return cleaned;
 }
 
+async function readableStreamToBuffer(readableStream: ReadableStream<Uint8Array>): Promise<Buffer> {
+  const reader = readableStream.getReader();
+  const chunks: Uint8Array[] = [];
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (value) chunks.push(value);
+  }
+  return Buffer.concat(chunks);
+}
+
 // Function to generate audio summary using ElevenLabs TTS
 async function generateAudioSummary(
   summary: string,
@@ -162,28 +173,43 @@ async function generateAudioSummary(
 
     const voiceId = 'W71zT1VwIFFx3mMGH2uZ';
     const modelId = 'eleven_turbo_v2_5';
-
-    const audio = await elevenlabs.generate({
-      voice: voiceId,
+    const audio = await elevenlabs.textToSpeech.convert(voiceId, {
       text: summary,
       model_id: modelId,
       language_code: 'it'
     });
 
-    console.log('audio typeof:', typeof audio);
-    console.log('audio constructor:', audio?.constructor?.name);
-    console.log('audio keys:', Object.keys(audio ?? {}));
+    console.log('audio type:', typeof audio, audio.constructor?.name);
 
     if (Buffer.isBuffer(audio)) {
       fs.writeFileSync(speechFile, audio);
-    } else if (audio.pipe) {
+      console.log('Audio written as buffer');
+    } else if (audio.pipe && typeof audio.pipe === 'function') {
+      // Fallback: salva lo stream, ma logga se ricevi dati
       const fileStream = fs.createWriteStream(speechFile);
+      let receivedData = false;
+      audio.on('data', (chunk) => {
+        receivedData = true;
+        console.log('Received audio chunk of size:', chunk.length);
+      });
       audio.pipe(fileStream);
       await new Promise<void>((resolve, reject) => {
-        fileStream.on('finish', resolve);
+        fileStream.on('finish', () => {
+          if (!receivedData) {
+            reject(new Error('No data received from audio stream'));
+          } else {
+            resolve();
+          }
+        });
         fileStream.on('error', reject);
         audio.on('error', reject);
       });
+      console.log('Audio written as stream');
+    } else if (audio && typeof (audio as any).getReader === 'function') {
+      // Probabilmente è un ReadableStream web
+      const buffer = await readableStreamToBuffer(audio as unknown as ReadableStream<Uint8Array>);
+      fs.writeFileSync(speechFile, buffer);
+      console.log('Audio written from ReadableStream');
     } else {
       throw new Error('Unknown audio type returned from ElevenLabs');
     }
