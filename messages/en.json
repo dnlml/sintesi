@@ -4,7 +4,7 @@
   "summary_title": "Summary",
   "summary_placeholder": "Insert the YouTube video URL",
   "summary_button": "Generate summary",
-  "summary_download_audio": "Download or listen to audio",
+  "summary_download_audio": "Download audio",
   "summary_audio_downloaded": "Audio downloaded successfully",
   "summary_length_label": "Summary length",
   "length_short": "Short",

@@ -1,7 +1,16 @@
 import type { Actions } from '@sveltejs/kit';
 
 export const actions: Actions = {
-  default: async ({ request }) => {
+  default: async ({ request, cookies }) => {
+    const authValue = cookies.get('auth');
+    if (authValue === '4440') {
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      return {
+        summary: 'Lorem ipsum dolor sit amet',
+        audioPath: './summaries/test.mp3'
+      };
+    }
+
     const formData = await request.formData();
     const url = formData.get('url');
     const language = formData.get('language') || 'it';

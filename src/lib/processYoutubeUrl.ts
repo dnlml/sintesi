@@ -231,7 +231,10 @@ async function generateAudioSummary(
         audio.on('error', reject);
       });
       console.log('Audio written as stream');
-    } else if (audio && typeof (audio as any).getReader === 'function') {
+    } else if (
+      audio &&
+      typeof (audio as unknown as ReadableStream<Uint8Array>).getReader === 'function'
+    ) {
       // Probabilmente è un ReadableStream web
       const buffer = await readableStreamToBuffer(audio as unknown as ReadableStream<Uint8Array>);
       fs.writeFileSync(speechFile, buffer);
@@ -273,6 +276,6 @@ export async function processYoutubeUrl(
   // Return summary and audio file path
   return {
     summary,
-    audioPath: `./summaries/${metadata.channel}-${metadata.title}.mp3`
+    audioPath: `./static/summaries/${metadata.channel}-${metadata.title}.mp3`
   };
 }
