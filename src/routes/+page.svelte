@@ -17,10 +17,17 @@
   let volume = $state(1); // Volume da 0 a 1
   let previousVolume = $state(1);
   let isMuted = $state(false);
+  let playbackRate = $state(1.0);
 
   $effect(() => {
     if (form?.summary || form?.error) {
       loading = false;
+    }
+  });
+
+  $effect(() => {
+    if (audioRef) {
+      audioRef.playbackRate = playbackRate;
     }
   });
 
@@ -80,6 +87,12 @@
       .toString()
       .padStart(2, '0');
     return `${minutes}:${seconds}`;
+  }
+
+  function changePlaybackRate(newRate: number) {
+    if (!audioRef) return;
+    audioRef.playbackRate = newRate;
+    playbackRate = newRate;
   }
 
   $effect(() => {
@@ -371,6 +384,22 @@
                   class="h-2 w-20 cursor-pointer appearance-none rounded-lg bg-slate-600 accent-sky-500"
                   aria-label="Volume"
                 />
+              </div>
+
+              <!-- Controlli Playback Rate -->
+              <div class="mt-3 flex items-center justify-center gap-2">
+                <span class="text-sm text-slate-300">Speed:</span>
+                {#each [1.0, 1.2, 1.5, 2.0] as rate (rate)}
+                  <button
+                    onclick={() => changePlaybackRate(rate)}
+                    class="rounded-md px-2.5 py-1 text-xs font-medium transition-colors duration-150 focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 focus:ring-offset-slate-700 focus:outline-none {playbackRate ===
+                    rate
+                      ? 'bg-sky-500 text-white'
+                      : 'bg-slate-600 text-slate-200 hover:bg-slate-500'}"
+                  >
+                    {rate.toFixed(1)}x
+                  </button>
+                {/each}
               </div>
             </div>
 
