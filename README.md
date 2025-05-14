@@ -1,56 +1,38 @@
-# YouTube Summarizer
+# sv
 
-This project is a Node.js application written in TypeScript that retrieves the transcript of a YouTube video and generates a summary.
+Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
 
-## Prerequisites
+## Creating a project
 
-- Node.js (v23 or higher recommended for direct execution of `.ts` files)
-- pnpm (or npm/yarn)
-- A `.env` file in the project root with the following variables:
-  - `ELEVENLABS_API_KEY`
-  - `OPENAI_API_KEY`
-
-## Installation
-
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd yt-summarizer
-   ```
-2. Install dependencies:
-   ```bash
-   pnpm install
-   ```
-
-## Usage
-
-To get a summary of a video, run:
+If you're seeing this, you've probably already done this step. Congrats!
 
 ```bash
-pnpm summarize <youtube_video_url>
+# create a new project in the current directory
+npx sv create
+
+# create a new project in my-app
+npx sv create my-app
 ```
 
-Replace `<youtube_video_url>` with the full URL of the YouTube video.
+## Developing
 
-**Example:**
+Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
 
 ```bash
-pnpm summarize https://www.youtube.com/watch?v=dQw4w9WgXcQ
+npm run dev
+
+# or start the server and open the app in a new browser tab
+npm run dev -- --open
 ```
 
-## How it works
+## Building
 
-1. The application takes the video URL as a command line argument.
-2. It uses the `youtube-transcript` library to download the video transcript.
-3. **(Placeholder)** Generates a summary by showing the first 10 lines of the transcript.
-4. Prints the summary to the console.
+To create a production version of your app:
 
-## Next steps
+```bash
+npm run build
+```
 
-- Integrate a language model (LLM) to generate more accurate and concise summaries instead of the placeholder.
-- Add more robust error handling.
-- Options to customize the summary length.
+You can preview the production build with `npm run preview`.
 
----
-
-> **Note:** This application is currently localized only in Italian.
+> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
