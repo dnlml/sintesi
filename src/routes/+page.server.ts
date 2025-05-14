@@ -7,7 +7,7 @@ export const actions: Actions = {
       await new Promise((resolve) => setTimeout(resolve, 3000));
       return {
         summary: 'Lorem ipsum dolor sit amet',
-        audioPath: './summaries/test.mp3'
+        audioPath: '/summaries_test/test.mp3'
       };
     }
 

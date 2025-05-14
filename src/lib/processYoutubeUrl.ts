@@ -3,9 +3,10 @@ import { YoutubeTranscript, type TranscriptResponse } from 'youtube-transcript';
 import OpenAI from 'openai';
 import { ElevenLabsClient } from 'elevenlabs';
 import * as dotenv from 'dotenv';
-import * as fs from 'fs';
+import { promises as fsPromises, createWriteStream as fsCreateWriteStream } from 'fs';
 import * as path from 'path';
 import ytdl from '@distube/ytdl-core';
+import { pipeline } from 'node:stream/promises';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -194,8 +195,10 @@ async function generateAudioSummary(
     return;
   }
   try {
-    // Construct filename from provided channel and title
-    const speechFile = path.resolve(`./summaries/${channel}-${title}.mp3`);
+    const summariesDir = path.resolve('./static/summaries');
+    await fsPromises.mkdir(summariesDir, { recursive: true });
+
+    const speechFile = path.join(summariesDir, `${channel}-${title}.mp3`);
 
     const voiceId = 'W71zT1VwIFFx3mMGH2uZ';
     const modelId = 'eleven_turbo_v2_5';
@@ -208,36 +211,19 @@ async function generateAudioSummary(
     console.log('audio type:', typeof audio, audio.constructor?.name);
 
     if (Buffer.isBuffer(audio)) {
-      fs.writeFileSync(speechFile, audio);
+      await fsPromises.writeFile(speechFile, audio);
       console.log('Audio written as buffer');
     } else if (audio.pipe && typeof audio.pipe === 'function') {
-      // Fallback: salva lo stream, ma logga se ricevi dati
-      const fileStream = fs.createWriteStream(speechFile);
-      let receivedData = false;
-      audio.on('data', (chunk) => {
-        receivedData = true;
-        console.log('Received audio chunk of size:', chunk.length);
-      });
-      audio.pipe(fileStream);
-      await new Promise<void>((resolve, reject) => {
-        fileStream.on('finish', () => {
-          if (!receivedData) {
-            reject(new Error('No data received from audio stream'));
-          } else {
-            resolve();
-          }
-        });
-        fileStream.on('error', reject);
-        audio.on('error', reject);
-      });
+      // Usa stream.pipeline per la gestione asincrona degli stream
+      const fileStream = fsCreateWriteStream(speechFile); // Usa l'import rinominato
+      await pipeline(audio, fileStream);
       console.log('Audio written as stream');
     } else if (
       audio &&
       typeof (audio as unknown as ReadableStream<Uint8Array>).getReader === 'function'
     ) {
-      // Probabilmente è un ReadableStream web
       const buffer = await readableStreamToBuffer(audio as unknown as ReadableStream<Uint8Array>);
-      fs.writeFileSync(speechFile, buffer);
+      await fsPromises.writeFile(speechFile, buffer);
       console.log('Audio written from ReadableStream');
     } else {
       throw new Error('Unknown audio type returned from ElevenLabs');
@@ -270,12 +256,10 @@ export async function processYoutubeUrl(
     summaryLengthValue
   );
 
-  // Pass summary, channel, title, and language to generateAudioSummary
   await generateAudioSummary(summary, metadata.channel, metadata.title, language);
 
-  // Return summary and audio file path
   return {
     summary,
-    audioPath: `./static/summaries/${metadata.channel}-${metadata.title}.mp3`
+    audioPath: `/summaries/${metadata.channel}-${metadata.title}.mp3`
   };
 }

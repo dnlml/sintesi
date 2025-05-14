@@ -1,6 +1,7 @@
 <script lang="ts">
   import { m } from '$lib/paraglide/messages.js';
   import { enhance } from '$app/forms';
+  import { goto } from '$app/navigation';
 
   let { form }: { form?: { summary?: string; audioPath?: string; error?: string } } = $props();
   let url = $state('');
@@ -94,6 +95,40 @@
       };
     }
   });
+
+  async function handleCreateNew() {
+    const confirmation = window.confirm(
+      'The current summary and audio file will be deleted. Make sure you have downloaded the audio if needed. Proceed to create a new summary and lose the current one?'
+    );
+    if (confirmation) {
+      if (form?.audioPath) {
+        const pathForBody = form.audioPath.startsWith('/')
+          ? form.audioPath.substring(1)
+          : form.audioPath;
+
+        try {
+          const response = await fetch('/api/summary/delete', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ filepath: pathForBody })
+          });
+          const result = await response.json();
+          if (!response.ok) {
+            console.error('Failed to delete audio file:', result.error);
+            // Potresti voler mostrare un errore all'utente qui, ma per ora continuiamo con il reset
+          } else {
+            console.log('Audio file deletion process:', result.message);
+          }
+        } catch (error) {
+          console.error('Error calling delete API:', error);
+          // Gestisci l'errore di rete o altro
+        }
+      }
+      goto('/', { invalidateAll: true });
+    }
+  }
 </script>
 
 <div class="flex min-h-screen items-center justify-center bg-slate-900 px-2 py-8 text-slate-200">
@@ -342,12 +377,23 @@
             <a
               href={form.audioPath.replace('./', '/')}
               target="_blank"
-              class="inline-block rounded-lg bg-sky-600 px-6 py-2 font-semibold text-white shadow-md transition hover:bg-sky-700"
+              class="mb-6 inline-block rounded-lg bg-sky-600 px-6 py-2 font-semibold text-white shadow-md transition hover:bg-sky-700"
             >
               {m.summary_download_audio()}
             </a>
           </div>
         {/if}
+      </div>
+    {/if}
+
+    {#if form?.audioPath}
+      <div class="mb-6 text-center">
+        <button
+          onclick={handleCreateNew}
+          class="inline-block cursor-pointer rounded-lg bg-sky-600 px-6 py-2 font-semibold text-white shadow-md transition hover:bg-sky-700"
+        >
+          {'Create New Summary'}
+        </button>
       </div>
     {/if}
   </div>
