@@ -182,12 +182,19 @@ async function readableStreamToBuffer(readableStream: ReadableStream<Uint8Array>
 }
 
 // Function to generate audio summary using ElevenLabs TTS
-async function generateAudioSummary(
-  summary: string,
-  channel: string,
-  title: string,
-  language: string
-): Promise<void> {
+async function generateAudioSummary({
+  summary,
+  channel,
+  title,
+  language,
+  speed
+}: {
+  summary: string;
+  channel: string;
+  title: string;
+  language: string;
+  speed: number;
+}): Promise<void> {
   console.log(`Generating audio summary using ElevenLabs library in language: ${language}...`);
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) {
@@ -205,7 +212,10 @@ async function generateAudioSummary(
     const audio = await elevenlabs.textToSpeech.convert(voiceId, {
       text: summary,
       model_id: modelId,
-      language_code: language
+      language_code: language,
+      voice_settings: {
+        speed
+      }
     });
 
     console.log('audio type:', typeof audio, audio.constructor?.name);
@@ -243,8 +253,8 @@ export async function processYoutubeUrl(
 ): Promise<{ summary: string; audioPath: string }> {
   // Get transcript and metadata (including description)
   const transcript = await getTranscript(videoUrl);
-  const metadata = await getVideoMetadata(videoUrl); // Get metadata once
-  const cleanedDescription = cleanDescription(metadata.description);
+  const { channel, title, description } = await getVideoMetadata(videoUrl); // Get metadata once
+  const cleanedDescription = cleanDescription(description);
 
   const summaryLengthValue = summaryLengthMap[summaryLengthKey] || MAX_SUMMARY_LINE_LENGTH_MEDIUM;
 
@@ -256,10 +266,16 @@ export async function processYoutubeUrl(
     summaryLengthValue
   );
 
-  await generateAudioSummary(summary, metadata.channel, metadata.title, language);
+  await generateAudioSummary({
+    summary,
+    channel,
+    title,
+    language,
+    speed: 1.0
+  });
 
   return {
     summary,
-    audioPath: `/summaries/${metadata.channel}-${metadata.title}.mp3`
+    audioPath: `/summaries/${channel}-${title}.mp3`
   };
 }

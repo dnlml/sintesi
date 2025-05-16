@@ -3,7 +3,7 @@ import type { Actions } from '@sveltejs/kit';
 export const actions: Actions = {
   default: async ({ request, cookies }) => {
     const authValue = cookies.get('auth');
-    if (authValue === '4440') {
+    if (authValue === '44440') {
       await new Promise((resolve) => setTimeout(resolve, 3000));
       return {
         summary: 'Lorem ipsum dolor sit amet',
