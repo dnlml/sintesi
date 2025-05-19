@@ -1,4 +1,4 @@
-# Youtube Summarizer
+# Sintesi
 
 Transform YouTube Videos into Key Insights with Text and Audio Summaries in a Flash!
 
@@ -37,7 +37,7 @@ Transform YouTube Videos into Key Insights with Text and Audio Summaries in a Fl
 
     ```bash
     git clone <your-repository-url>
-    cd yt-summarizer
+    cd sintesi
     ```
 
 2.  **Install dependencies**:

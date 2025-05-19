@@ -2,6 +2,7 @@
   import { enhance } from '$app/forms';
   import { fly } from 'svelte/transition';
   import type { ActionData } from './$types';
+  import Title from '$lib/components/TItle.svelte';
 
   let email = $state('');
   let message = $state('');
@@ -43,12 +44,10 @@
 
 <div class="flex min-h-screen items-center justify-center bg-slate-900 px-2 py-8 text-slate-200">
   <div class="w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-800 p-8 shadow-2xl">
-    <h1 class="font-space-grotesk mb-4 text-center text-4xl font-medium tracking-tight text-white">
-      Youtube Summarizer
-    </h1>
+    <Title />
     <span class="mb-8 block text-center text-sm text-slate-400">
-      Unlock Early Access! Register your email and be among the first to experience Youtube
-      Summarizer.
+      Unlock Early Access! Register your email and be among the first to experience SINTESI, the
+      easiest way to summarize YouTube videos in audio and text.
     </span>
 
     <form method="POST" use:enhance class="space-y-6">

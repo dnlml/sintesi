@@ -4,6 +4,7 @@
   import SummarizerForm from '$lib/components/summarizer/SummarizerForm.svelte';
   import AudioPlayer from '$lib/components/summarizer/AudioPlayer.svelte';
   import SummaryDisplay from '$lib/components/summarizer/SummaryDisplay.svelte';
+  import Title from '$lib/components/TItle.svelte';
 
   let { form }: { form?: { summary?: string; audioPath?: string; error?: string } } = $props();
   let url = $state('');
@@ -54,9 +55,7 @@
 
 <div class="flex min-h-screen items-center justify-center bg-slate-900 px-2 py-8 text-slate-200">
   <div class="w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-800 p-8 shadow-2xl">
-    <h1 class="font-space-grotesk mb-4 text-center text-4xl font-medium tracking-tight text-white">
-      Youtube Summarizer
-    </h1>
+    <Title />
     <span class="mb-8 block text-center text-sm text-slate-400">
       Transform YouTube Videos into Key Insights: Audio & Text Summaries in a Flash!
     </span>
