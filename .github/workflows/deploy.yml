@@ -27,6 +27,9 @@ jobs:
         run: pnpm install
 
       - name: Build SvelteKit app
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
         run: pnpm run build
 
       - name: Copy files to VPS via rsync
