@@ -30,7 +30,7 @@ jobs:
         run: pnpm run build
 
       - name: Copy files to VPS via rsync
-        uses: burnett01/rsync-deployments@v2.0.0
+        uses: burnett01/rsync-deployments@v2.1.1
         with:
           switches: -avz --delete
           path: ./build/
