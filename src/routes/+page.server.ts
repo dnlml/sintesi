@@ -1,7 +1,7 @@
 import type { Actions } from '@sveltejs/kit';
 
 export const actions: Actions = {
-  default: async ({ request, cookies }) => {
+  default: async ({ request, cookies, fetch }) => {
     const authValue = cookies.get('auth');
     if (authValue === '44440') {
       await new Promise((resolve) => setTimeout(resolve, 3000));
@@ -27,7 +27,7 @@ export const actions: Actions = {
     }
 
     try {
-      const res = await fetch('http://localhost:5173/api/summary', {
+      const res = await fetch('/api/summary', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url, language, summaryLength })
