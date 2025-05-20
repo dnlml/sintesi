@@ -67,7 +67,7 @@ jobs:
           echo "$SSH_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -p 29 51.178.44.81 >> ~/.ssh/known_hosts
-          ssh -i ~/.ssh/id_ed25519 -p 29 dnlml@51.178.44.81 "cat > ~/sites/sintesi/app/.env << 'EOF'
+          ssh -i ~/.ssh/id_ed25519 -p 29 dnlml@51.178.44.81 "cat > ~/sites/sintesi/app/.env <<EOF
 OPENAI_API_KEY=$OPENAI_API_KEY
 ELEVENLABS_API_KEY=$ELEVENLABS_API_KEY
 VIRTUAL_HOST=$VIRTUAL_HOST
