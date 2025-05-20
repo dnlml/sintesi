@@ -41,7 +41,7 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -p 29 51.178.44.81 >> ~/.ssh/known_hosts
           rsync -avz --delete -e "ssh -i ~/.ssh/id_ed25519 -p 29" \
-            package.json pnpm-lock.yaml .svelte-kit/output/ deploy.sh \
+            package.json pnpm-lock.yaml .svelte-kit/output/ deploy.sh Dockerfile docker-compose.yml \
             dnlml@51.178.44.81:~/sites/sintesi/app/
 
       - name: Run deploy script on VPS
