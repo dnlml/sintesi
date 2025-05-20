@@ -32,6 +32,18 @@ jobs:
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
         run: pnpm run build
 
+      - name: Copy SSR build and dependencies to VPS via rsync
+        env:
+          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p 29 51.178.44.81 >> ~/.ssh/known_hosts
+          rsync -avz --delete -e "ssh -i ~/.ssh/id_ed25519 -p 29" \
+            package.json pnpm-lock.yaml .svelte-kit/output/ \
+            dnlml@51.178.44.81:~/sites/sintesi/app/
+
       - name: Copy files to VPS via rsync
         env:
           SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
@@ -41,3 +53,13 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -p 29 51.178.44.81 >> ~/.ssh/known_hosts
           rsync -avz --delete -e "ssh -i ~/.ssh/id_ed25519 -p 29" ./build/ dnlml@51.178.44.81:~/sites/sintesi/public/
+
+      - name: Run deploy script on VPS
+        env:
+          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p 29 51.178.44.81 >> ~/.ssh/known_hosts
+          ssh -i ~/.ssh/id_ed25519 -p 29 dnlml@51.178.44.81 'bash ~/sites/sintesi/app/deploy.sh'
