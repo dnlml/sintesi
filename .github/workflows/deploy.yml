@@ -52,4 +52,4 @@ jobs:
           echo "$SSH_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -p 29 51.178.44.81 >> ~/.ssh/known_hosts
-          ssh -i ~/.ssh/id_ed25519 -p 29 dnlml@51.178.44.81 'bash ~/sites/sintesi/app/deploy.sh'
+          ssh -i ~/.ssh/id_ed25519 -p 29 dnlml@51.178.44.81 'bash ~/sites/sintesi/deploy.sh'
