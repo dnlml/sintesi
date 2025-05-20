@@ -1,0 +1,20 @@
+version: '3'
+
+services:
+  sveltekit:
+    build: .
+    restart: always
+    environment:
+      VIRTUAL_HOST: ${VIRTUAL_HOST}
+      LETSENCRYPT_HOST: ${LETSENCRYPT_HOST}
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY}
+    expose:
+      - '3000'
+    networks:
+      - nginx-proxy
+
+networks:
+  nginx-proxy:
+    external: true
