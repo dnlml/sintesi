@@ -80,6 +80,7 @@ jobs:
         run: |
           docker build \
             --build-arg OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
+            --build-arg ELEVENLABS_API_KEY=${{ secrets.ELEVENLABS_API_KEY }} \
             -t ghcr.io/${{ github.repository_owner }}/sintesi:latest .
           docker push ghcr.io/${{ github.repository_owner }}/sintesi:latest
 
