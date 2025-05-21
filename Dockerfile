@@ -1,9 +1,11 @@
+ARG OPENAI_API_KEY
 # Install dependencies and build
 FROM node:20-alpine AS builder
 WORKDIR /app
 COPY . .
 RUN corepack enable && corepack prepare pnpm@8.15.6 --activate
 RUN pnpm install --frozen-lockfile
+RUN echo "OPENAI_API_KEY=$OPENAI_API_KEY" > .env
 RUN pnpm run build
 
 # Production image
