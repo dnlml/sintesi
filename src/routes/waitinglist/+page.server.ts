@@ -1,8 +1,6 @@
 import type { Actions } from './$types';
-import { promises as fs } from 'fs';
-import path from 'path';
-
-const EMAILS_PATH = path.resolve(process.cwd(), 'static', 'emails.json');
+import { db } from '$lib/server/db';
+import { users } from '$lib/server/db/schema';
 
 export const actions: Actions = {
   default: async ({ request }) => {
@@ -17,44 +15,29 @@ export const actions: Actions = {
         };
       }
 
-      let emails: { email: string; date: string; counter?: number }[] = [];
       try {
-        const data = await fs.readFile(EMAILS_PATH, 'utf-8');
-        emails = JSON.parse(data);
-      } catch (err) {
-        // Se il file non esiste, emails resta []
-        if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
-      }
-
-      const idx = emails.findIndex((e) => e.email.toLowerCase() === email.toLowerCase());
-      let counter: number = 1;
-      if (idx !== -1) {
-        // Email già presente, incremento counter
-        const entry = emails[idx];
-        if (entry.counter === undefined) {
-          entry.counter = 2;
-        } else {
-          entry.counter++;
+        await db.insert(users).values({ email });
+        return {
+          success: true,
+          message: 'Thank you for registering! We will notify you soon.',
+          email
+        };
+      } catch (err: unknown) {
+        // Unique violation error code for Postgres is '23505'
+        if (
+          typeof err === 'object' &&
+          err !== null &&
+          'code' in err &&
+          (err as { code?: string }).code === '23505'
+        ) {
+          return {
+            success: true,
+            message: 'This email was already registered.',
+            email
+          };
         }
-        counter = entry.counter;
-        emails[idx] = entry;
-      } else {
-        // Nuova email
-        const entry = { email, date: new Date().toISOString(), counter: 1 };
-        emails.push(entry);
-        counter = 1;
+        throw err;
       }
-      await fs.writeFile(EMAILS_PATH, JSON.stringify(emails, null, 2), 'utf-8');
-
-      return {
-        success: true,
-        message:
-          idx === -1
-            ? 'Thank you for registering! We will notify you soon.'
-            : `This email was already registered. Attempt count: ${counter}`,
-        email,
-        counter
-      };
     } catch (err) {
       console.error('Error processing form data:', err);
       return {
