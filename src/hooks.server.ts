@@ -2,6 +2,7 @@ import { redirect } from '@sveltejs/kit';
 import type { Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { paraglideMiddleware } from '$lib/paraglide/server';
+import { env } from '$env/dynamic/private';
 
 // Define paths that do not require authentication
 const PUBLIC_PATHS = ['/waitinglist'];
@@ -28,7 +29,7 @@ const handleAuth: Handle = async ({ event, resolve }) => {
   const { pathname } = event.url;
   const isPublicPath = PUBLIC_PATHS.some((publicPath) => pathname.startsWith(publicPath));
 
-  if (!isPublicPath && authCookie !== '11155' && authCookie !== '44440') {
+  if (!isPublicPath && authCookie !== env.TEST_MODE_TOKEN && authCookie !== env.GOD_MODE_TOKEN) {
     throw redirect(303, '/waitinglist');
   }
   return resolve(event);

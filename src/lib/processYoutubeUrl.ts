@@ -218,8 +218,6 @@ async function generateAudioSummary({
       }
     });
 
-    console.log('audio type:', typeof audio, audio.constructor?.name);
-
     if (Buffer.isBuffer(audio)) {
       await fsPromises.writeFile(speechFile, audio);
       console.log('Audio written as buffer');
