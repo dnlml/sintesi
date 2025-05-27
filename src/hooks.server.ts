@@ -29,7 +29,9 @@ const handleAuth: Handle = async ({ event, resolve }) => {
   const { pathname } = event.url;
   const isPublicPath = PUBLIC_PATHS.some((publicPath) => pathname.startsWith(publicPath));
 
-  if (!isPublicPath && authCookie !== env.TEST_MODE_TOKEN && authCookie !== env.GOD_MODE_TOKEN) {
+  const validTokens = [env.TEST_MODE_TOKEN, env.GOD_MODE_TOKEN];
+
+  if (!isPublicPath && (!authCookie || !validTokens.includes(authCookie))) {
     throw redirect(303, '/waitinglist');
   }
   return resolve(event);

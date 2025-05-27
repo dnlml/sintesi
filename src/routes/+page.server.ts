@@ -1,10 +1,11 @@
+import { env } from '$env/dynamic/private';
 import type { Actions } from '@sveltejs/kit';
 
 export const actions: Actions = {
   default: async ({ request, cookies, fetch }) => {
     const authValue = cookies.get('auth');
-    if (authValue === '44440') {
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+    if (authValue === env.TEST_MODE_TOKEN) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
       return {
         summary: 'Lorem ipsum dolor sit amet',
         audioPath: '/summaries_test/test.mp3'

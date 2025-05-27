@@ -7,6 +7,7 @@ import { promises as fsPromises, createWriteStream as fsCreateWriteStream } from
 import * as path from 'path';
 import ytdl from '@distube/ytdl-core';
 import { pipeline } from 'node:stream/promises';
+import { uploadFileToS3, generateS3Key, type UploadResult } from './s3Client.js';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -194,12 +195,12 @@ async function generateAudioSummary({
   title: string;
   language: string;
   speed: number;
-}): Promise<void> {
+}): Promise<{ localPath: string; s3Url?: string }> {
   console.log(`Generating audio summary using ElevenLabs library in language: ${language}...`);
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) {
     console.error('ElevenLabs API key is missing.');
-    return;
+    throw new Error('ElevenLabs API key is missing.');
   }
   try {
     const summariesDir = path.resolve('./static/summaries');
@@ -238,6 +239,24 @@ async function generateAudioSummary({
     }
 
     console.log(`Audio summary saved successfully to: ${speechFile}`);
+
+    // Upload to S3
+    const s3Key = generateS3Key(channel, title, 'mp3');
+    const uploadResult: UploadResult = await uploadFileToS3(speechFile, s3Key);
+
+    if (uploadResult.success) {
+      console.log(`Audio uploaded to S3: ${uploadResult.s3Url}`);
+      console.log(`Signed URL: ${uploadResult.signedUrl}`);
+      return {
+        localPath: speechFile,
+        s3Url: uploadResult.signedUrl // Use signed URL instead of direct S3 URL
+      };
+    } else {
+      console.warn(`S3 upload failed: ${uploadResult.error}. Using local file.`);
+      return {
+        localPath: speechFile
+      };
+    }
   } catch (error) {
     console.error('Error generating audio summary using ElevenLabs library:', error);
     throw error;
@@ -248,7 +267,7 @@ export async function processYoutubeUrl(
   videoUrl: string,
   language: string,
   summaryLengthKey: string
-): Promise<{ summary: string; audioPath: string }> {
+): Promise<{ summary: string; audioPath: string; s3Url?: string }> {
   // Get transcript and metadata (including description)
   const transcript = await getTranscript(videoUrl);
   const { channel, title, description } = await getVideoMetadata(videoUrl); // Get metadata once
@@ -264,7 +283,7 @@ export async function processYoutubeUrl(
     summaryLengthValue
   );
 
-  await generateAudioSummary({
+  const audioResult = await generateAudioSummary({
     summary,
     channel,
     title,
@@ -274,6 +293,7 @@ export async function processYoutubeUrl(
 
   return {
     summary,
-    audioPath: `/summaries/${channel}-${title}.mp3`
+    audioPath: audioResult.s3Url || `/summaries/${channel}-${title}.mp3`, // This will be the signed URL
+    s3Url: audioResult.s3Url // This will also be the signed URL
   };
 }
