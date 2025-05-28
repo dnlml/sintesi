@@ -8,6 +8,7 @@ import * as path from 'path';
 import ytdl from '@distube/ytdl-core';
 import { pipeline } from 'node:stream/promises';
 import { uploadFileToS3, generateS3Key, type UploadResult } from './s3Client.js';
+import { logEvent, loggers } from './server/logger';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -268,32 +269,66 @@ export async function processYoutubeUrl(
   language: string,
   summaryLengthKey: string
 ): Promise<{ summary: string; audioPath: string; s3Url?: string }> {
-  // Get transcript and metadata (including description)
-  const transcript = await getTranscript(videoUrl);
-  const { channel, title, description } = await getVideoMetadata(videoUrl); // Get metadata once
-  const cleanedDescription = cleanDescription(description);
-
-  const summaryLengthValue = summaryLengthMap[summaryLengthKey] || MAX_SUMMARY_LINE_LENGTH_MEDIUM;
-
-  // Generate summary using transcript and cleaned description
-  const summary = await summarizeTranscript(
-    transcript,
-    cleanedDescription,
-    language,
-    summaryLengthValue
+  const startTime = Date.now();
+  loggers.video.info(
+    { url: videoUrl, language, summaryLength: summaryLengthKey },
+    'Starting video processing'
   );
 
-  const audioResult = await generateAudioSummary({
-    summary,
-    channel,
-    title,
-    language,
-    speed: 1.0
-  });
+  try {
+    // Get transcript and metadata (including description)
+    const transcript = await getTranscript(videoUrl);
+    const { channel, title, description } = await getVideoMetadata(videoUrl); // Get metadata once
+    const cleanedDescription = cleanDescription(description);
 
-  return {
-    summary,
-    audioPath: audioResult.s3Url || `/summaries/${channel}-${title}.mp3`, // This will be the signed URL
-    s3Url: audioResult.s3Url // This will also be the signed URL
-  };
+    const summaryLengthValue = summaryLengthMap[summaryLengthKey] || MAX_SUMMARY_LINE_LENGTH_MEDIUM;
+
+    // Generate summary using transcript and cleaned description
+    const summary = await summarizeTranscript(
+      transcript,
+      cleanedDescription,
+      language,
+      summaryLengthValue
+    );
+
+    const audioResult = await generateAudioSummary({
+      summary,
+      channel,
+      title,
+      language,
+      speed: 1.0
+    });
+
+    const duration = Date.now() - startTime;
+    logEvent.videoProcessing(videoUrl, language, duration, true);
+    loggers.video.info(
+      {
+        url: videoUrl,
+        duration,
+        audioPath: audioResult.s3Url || audioResult.localPath
+      },
+      'Video processing completed successfully'
+    );
+
+    return {
+      summary,
+      audioPath: audioResult.s3Url || `/summaries/${channel}-${title}.mp3`, // This will be the signed URL
+      s3Url: audioResult.s3Url // This will also be the signed URL
+    };
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+    logEvent.videoProcessing(videoUrl, language, duration, false, errorMessage);
+    loggers.video.error(
+      {
+        url: videoUrl,
+        error: errorMessage,
+        duration
+      },
+      'Video processing failed'
+    );
+
+    throw error;
+  }
 }

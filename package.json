@@ -60,7 +60,11 @@
     "@aws-sdk/s3-request-presigner": "^3.817.0",
     "@inlang/paraglide-js": "^2.0.0",
     "drizzle-orm": "^0.40.0",
-    "postgres": "^3.4.5"
+    "pino": "^9.7.0",
+    "pino-pretty": "^13.0.0",
+    "postgres": "^3.4.5",
+    "resend": "^4.5.1",
+    "stripe": "^18.1.1"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
