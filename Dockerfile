@@ -1,6 +1,9 @@
 # Use official Node.js image
 FROM node:20-alpine
 
+# Add label to link container image to GitHub repository
+LABEL org.opencontainers.image.source=https://github.com/dnlml/sintesi
+
 # Install pnpm with specific version to match local environment
 RUN npm install -g pnpm@10.10.0
 
