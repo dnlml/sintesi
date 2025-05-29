@@ -1,30 +1,47 @@
 #!/usr/bin/env node
 import OpenAI from 'openai';
 import { ElevenLabsClient } from 'elevenlabs';
-import * as dotenv from 'dotenv';
 import { promises as fsPromises, createWriteStream as fsCreateWriteStream } from 'fs';
 import * as path from 'path';
 import ytdl from '@distube/ytdl-core';
 import { pipeline } from 'node:stream/promises';
 import { uploadFileToS3, generateS3Key, type UploadResult } from './s3Client.js';
 import { logEvent, loggers } from './server/logger';
+import { env } from '$env/dynamic/private';
 
-// Load environment variables from .env file
-dotenv.config();
 const MAX_SUMMARY_LINE_LENGTH_MEDIUM = 30;
 const MAX_SUMMARY_LINE_LENGTH_SHORT = 10;
 const MAX_SUMMARY_LINE_LENGTH_LONG = 85;
 
-// Check that API keys are present
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-if (!OPENAI_API_KEY) {
-  console.error('Error: OPENAI_API_KEY not found in .env file');
-  process.exit(1);
+// Lazy initialization for OpenAI and ElevenLabs clients
+let _openai: OpenAI | null = null;
+let _elevenlabs: ElevenLabsClient | null = null;
+
+function getOpenAI(): OpenAI {
+  if (!_openai) {
+    const OPENAI_API_KEY = env.OPENAI_API_KEY;
+    if (!OPENAI_API_KEY) {
+      throw new Error('OPENAI_API_KEY not found in environment variables');
+    }
+    _openai = new OpenAI({
+      apiKey: OPENAI_API_KEY,
+      organization: 'org-nSirMan6JeL4Mp8H3pFirXoT'
+    });
+  }
+  return _openai;
 }
-const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
-if (!ELEVENLABS_API_KEY) {
-  console.error('Error: ELEVENLABS_API_KEY not found in .env file');
-  process.exit(1);
+
+function getElevenLabs(): ElevenLabsClient {
+  if (!_elevenlabs) {
+    const ELEVENLABS_API_KEY = env.ELEVENLABS_API_KEY;
+    if (!ELEVENLABS_API_KEY) {
+      throw new Error('ELEVENLABS_API_KEY not found in environment variables');
+    }
+    _elevenlabs = new ElevenLabsClient({
+      apiKey: ELEVENLABS_API_KEY
+    });
+  }
+  return _elevenlabs;
 }
 
 // Definizione della mappa per la lunghezza del riassunto
@@ -33,16 +50,6 @@ const summaryLengthMap: { [key: string]: number } = {
   medium: MAX_SUMMARY_LINE_LENGTH_MEDIUM,
   long: MAX_SUMMARY_LINE_LENGTH_LONG
 };
-
-const openai = new OpenAI({
-  apiKey: OPENAI_API_KEY,
-  organization: 'org-nSirMan6JeL4Mp8H3pFirXoT'
-});
-
-// Initialize ElevenLabs Client
-const elevenlabs = new ElevenLabsClient({
-  apiKey: ELEVENLABS_API_KEY
-});
 
 // Supported language codes (matching frontend options)
 const SUPPORTED_LANGUAGES = ['en', 'it', 'fr', 'es', 'de'] as const;
@@ -249,7 +256,7 @@ Trascrizione:
 ${transcript}`;
 
   try {
-    const completion = await openai.chat.completions.create({
+    const completion = await getOpenAI().chat.completions.create({
       messages: [
         {
           role: 'system',
@@ -375,7 +382,7 @@ async function generateAudioSummary({
 
     const voiceId = 'W71zT1VwIFFx3mMGH2uZ';
     const modelId = 'eleven_turbo_v2_5';
-    const audio = await elevenlabs.textToSpeech.convert(voiceId, {
+    const audio = await getElevenLabs().textToSpeech.convert(voiceId, {
       text: summary,
       model_id: modelId,
       language_code: language,

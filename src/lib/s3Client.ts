@@ -7,29 +7,56 @@ import {
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { promises as fsPromises } from 'fs';
 import * as path from 'path';
-import * as dotenv from 'dotenv';
+import { env } from '$env/dynamic/private';
 
-// Load environment variables
-dotenv.config();
+// Lazy S3 client initialization - only fails when actually used, not during build
+let _s3Client: S3Client | null = null;
+let _awsConfig: {
+  AWS_ACCESS_KEY_ID: string;
+  AWS_SECRET_ACCESS_KEY: string;
+  AWS_REGION: string;
+  AWS_S3_BUCKET: string;
+} | null = null;
 
-// Validate required environment variables
-const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID;
-const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
-const AWS_REGION = process.env.AWS_REGION || 'eu-west-3';
-const AWS_S3_BUCKET = process.env.AWS_S3_BUCKET;
+function getS3Client(): S3Client {
+  if (!_s3Client) {
+    // Get environment variables
+    const AWS_ACCESS_KEY_ID = env.AWS_ACCESS_KEY_ID;
+    const AWS_SECRET_ACCESS_KEY = env.AWS_SECRET_ACCESS_KEY;
+    const AWS_REGION = env.AWS_REGION || 'eu-west-3';
+    const AWS_S3_BUCKET = env.AWS_S3_BUCKET;
 
-if (!AWS_ACCESS_KEY_ID || !AWS_SECRET_ACCESS_KEY || !AWS_S3_BUCKET) {
-  throw new Error('Missing required AWS environment variables. Please check your .env file.');
+    if (!AWS_ACCESS_KEY_ID || !AWS_SECRET_ACCESS_KEY || !AWS_S3_BUCKET) {
+      throw new Error('Missing required AWS environment variables. Please check your .env file.');
+    }
+
+    // Cache config for other functions
+    _awsConfig = {
+      AWS_ACCESS_KEY_ID,
+      AWS_SECRET_ACCESS_KEY,
+      AWS_REGION,
+      AWS_S3_BUCKET
+    };
+
+    // Initialize S3 client
+    _s3Client = new S3Client({
+      region: AWS_REGION,
+      credentials: {
+        accessKeyId: AWS_ACCESS_KEY_ID,
+        secretAccessKey: AWS_SECRET_ACCESS_KEY
+      }
+    });
+  }
+  return _s3Client;
 }
 
-// Initialize S3 client
-const s3Client = new S3Client({
-  region: AWS_REGION,
-  credentials: {
-    accessKeyId: AWS_ACCESS_KEY_ID,
-    secretAccessKey: AWS_SECRET_ACCESS_KEY
+function getAwsConfig() {
+  if (!_awsConfig) {
+    // Initialize S3Client first to populate config
+    getS3Client();
   }
-});
+  return _awsConfig!;
+}
 
 export interface UploadResult {
   success: boolean;
@@ -52,6 +79,9 @@ export async function uploadFileToS3(
   contentType?: string
 ): Promise<UploadResult> {
   try {
+    const s3Client = getS3Client();
+    const { AWS_S3_BUCKET, AWS_REGION } = getAwsConfig();
+
     console.log(`Uploading file ${filePath} to S3 bucket ${AWS_S3_BUCKET} with key ${s3Key}`);
 
     // Read the file
@@ -142,6 +172,9 @@ export async function generateSignedUrl(
   s3Key: string,
   expiresIn: number = 24 * 60 * 60
 ): Promise<string> {
+  const s3Client = getS3Client();
+  const { AWS_S3_BUCKET } = getAwsConfig();
+
   const command = new GetObjectCommand({
     Bucket: AWS_S3_BUCKET,
     Key: s3Key
@@ -150,4 +183,5 @@ export async function generateSignedUrl(
   return await getSignedUrl(s3Client, command, { expiresIn });
 }
 
-export { s3Client };
+// Export the lazy-loaded client getter
+export { getS3Client as s3Client };
