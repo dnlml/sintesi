@@ -62,11 +62,11 @@ export const actions: Actions = {
     }
 
     // Validazione URL YouTube prima di consumare crediti
-    const youtubeRegex = /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\/.+/;
+    const youtubeRegex = /^https?:\/\/(www\.|m\.)?(youtube\.com|youtu\.be)\/.+/;
     if (!youtubeRegex.test(url)) {
       return {
         error:
-          'Please provide a valid YouTube URL (youtube.com or youtu.be). No credits were consumed.',
+          'Please provide a valid YouTube URL (youtube.com, m.youtube.com or youtu.be). No credits were consumed.',
         creditInfo
       };
     }

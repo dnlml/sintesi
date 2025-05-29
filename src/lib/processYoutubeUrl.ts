@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-import { YoutubeTranscript, type TranscriptResponse } from 'youtube-transcript';
 import OpenAI from 'openai';
 import { ElevenLabsClient } from 'elevenlabs';
 import * as dotenv from 'dotenv';
@@ -45,14 +44,111 @@ const elevenlabs = new ElevenLabsClient({
   apiKey: ELEVENLABS_API_KEY
 });
 
-async function getTranscript(url: string): Promise<string> {
+// Helper function to extract video ID from YouTube URL
+function extractVideoId(url: string): string | null {
+  const regex =
+    /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/;
+  const match = url.match(regex);
+  return match ? match[1] : null;
+}
+
+// Types for subtitle API responses
+interface SubtitleTrack {
+  language_code: string;
+  url: string;
+  label?: string;
+}
+
+interface CaptionEntry {
+  text: string;
+  start?: number;
+  dur?: number;
+}
+
+async function getTranscript(url: string, preferredLanguage: string = 'it'): Promise<string> {
   try {
     console.log(`Fetching transcript for: ${url}`);
-    const transcript = await YoutubeTranscript.fetchTranscript(url);
-    // Combine transcript parts into a single string
-    const fullTranscript = transcript.map((entry: TranscriptResponse) => entry.text).join(' ');
-    console.log('Transcript fetched successfully.');
-    return fullTranscript;
+
+    // Extract video ID from URL
+    const videoId = extractVideoId(url);
+    if (!videoId) {
+      throw new Error('Invalid YouTube URL - could not extract video ID');
+    }
+
+    // Try multiple Invidious instances for better reliability
+    const instances = [
+      'https://yewtu.be',
+      'https://inv.riverside.rocks',
+      'https://invidious.io',
+      'https://vid.puffyan.us'
+    ];
+
+    let lastError: Error | null = null;
+
+    for (const instance of instances) {
+      try {
+        console.log(`Trying instance: ${instance}`);
+        const apiUrl = `${instance}/api/v1/videos/${videoId}/subtitles`;
+
+        const res = await fetch(apiUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          }
+        });
+
+        if (!res.ok) {
+          throw new Error(`Instance ${instance} returned ${res.status}`);
+        }
+
+        const list = (await res.json()) as SubtitleTrack[];
+        if (!Array.isArray(list) || list.length === 0) {
+          throw new Error(`No subtitles available on ${instance}`);
+        }
+
+        // Find preferred language or fallback to first available
+        const track =
+          list.find((t: SubtitleTrack) => t.language_code === preferredLanguage) || list[0];
+
+        if (!track || !track.url) {
+          throw new Error(`No valid subtitle tracks found on ${instance}`);
+        }
+
+        console.log(`Using subtitles in language: ${track.language_code} from ${instance}`);
+        const captionsRes = await fetch(track.url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          }
+        });
+
+        if (!captionsRes.ok) {
+          throw new Error(`Failed to fetch subtitle content from ${instance}`);
+        }
+
+        const captions = (await captionsRes.json()) as CaptionEntry[];
+
+        // Convert captions to transcript text (similar format to youtube-transcript)
+        let fullTranscript = '';
+        if (Array.isArray(captions)) {
+          fullTranscript = captions.map((entry: CaptionEntry) => entry.text || '').join(' ');
+        } else {
+          throw new Error('Unexpected captions format');
+        }
+
+        if (fullTranscript.trim().length === 0) {
+          throw new Error(`Empty transcript from ${instance}`);
+        }
+
+        console.log(`Transcript fetched successfully via ${instance}`);
+        return fullTranscript;
+      } catch (error) {
+        console.warn(`Failed to get transcript from ${instance}:`, error);
+        lastError = error instanceof Error ? error : new Error(String(error));
+        continue; // Try next instance
+      }
+    }
+
+    // If we get here, all instances failed
+    throw lastError || new Error('All Invidious instances failed');
   } catch (error) {
     console.error('Error fetching transcript:', error);
     throw new Error('Could not fetch transcript for the provided URL.');
@@ -277,7 +373,7 @@ export async function processYoutubeUrl(
 
   try {
     // Get transcript and metadata (including description)
-    const transcript = await getTranscript(videoUrl);
+    const transcript = await getTranscript(videoUrl, language);
     const { channel, title, description } = await getVideoMetadata(videoUrl); // Get metadata once
     const cleanedDescription = cleanDescription(description);
 
