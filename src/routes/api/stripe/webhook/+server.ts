@@ -9,19 +9,22 @@ import { eq } from 'drizzle-orm';
 import { sendEmail, createPurchaseConfirmationEmail } from '$lib/server/email';
 import { logEvent, loggers } from '$lib/server/logger';
 
-if (!env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY is not set');
-}
-
-if (!env.STRIPE_WEBHOOK_SECRET) {
-  throw new Error('STRIPE_WEBHOOK_SECRET is not set');
-}
-
-const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
-  apiVersion: '2025-04-30.basil'
-});
-
 export const POST: RequestHandler = async ({ request }) => {
+  // Check environment variables at runtime instead of module load time
+  if (!env.STRIPE_SECRET_KEY) {
+    loggers.payments.error('STRIPE_SECRET_KEY is not set');
+    return json({ error: 'Stripe configuration missing' }, { status: 500 });
+  }
+
+  if (!env.STRIPE_WEBHOOK_SECRET) {
+    loggers.payments.error('STRIPE_WEBHOOK_SECRET is not set');
+    return json({ error: 'Webhook configuration missing' }, { status: 500 });
+  }
+
+  const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
+    apiVersion: '2025-04-30.basil'
+  });
+
   const body = await request.text();
   const signature = request.headers.get('stripe-signature');
 
@@ -36,7 +39,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
   try {
     // Verifica la firma del webhook
-    event = stripe.webhooks.constructEvent(body, signature, env.STRIPE_WEBHOOK_SECRET!);
+    event = stripe.webhooks.constructEvent(body, signature, env.STRIPE_WEBHOOK_SECRET);
     loggers.payments.info(
       { eventType: event.type, eventId: event.id },
       'Webhook signature verified'

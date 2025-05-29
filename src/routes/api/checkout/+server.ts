@@ -6,15 +6,16 @@ import { db } from '$lib/server/db';
 import { users } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 
-if (!env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY is not set');
-}
-
-const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
-  apiVersion: '2025-04-30.basil'
-});
-
 export const POST: RequestHandler = async ({ request, url }) => {
+  // Check environment variables at runtime instead of module load time
+  if (!env.STRIPE_SECRET_KEY) {
+    return json({ error: 'Stripe configuration missing' }, { status: 500 });
+  }
+
+  const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
+    apiVersion: '2025-04-30.basil'
+  });
+
   try {
     const { packageId, email } = await request.json();
 

@@ -29,11 +29,13 @@ export async function sendEmail(template: EmailTemplate): Promise<boolean> {
     if (!resend) {
       // Mock per sviluppo locale
       loggers.email.warn({ to: template.to }, 'RESEND_API_KEY not configured, using mock email');
-      console.log('\n📧 ===== EMAIL MOCK =====');
-      console.log(`To: ${template.to}`);
-      console.log(`Subject: ${template.subject}`);
-      console.log(`HTML: ${template.html}`);
-      console.log('========================\n');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('\n📧 ===== EMAIL MOCK =====');
+        console.log(`To: ${template.to}`);
+        console.log(`Subject: ${template.subject}`);
+        console.log(`HTML: ${template.html}`);
+        console.log('========================\n');
+      }
       return true;
     }
 
