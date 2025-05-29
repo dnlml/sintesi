@@ -88,12 +88,13 @@ async function getTranscript(url: string, preferredLanguage: string = 'it'): Pro
       throw new Error('Invalid YouTube URL - could not extract video ID');
     }
 
-    // Try multiple Invidious instances for better reliability
+    // Updated instance list with better rotation handling
     const instances = [
       'https://yewtu.be',
-      'https://inv.riverside.rocks',
-      'https://invidious.io',
-      'https://vid.puffyan.us'
+      'https://inv.nadeko.net',
+      'https://id.420129.xyz',
+      'https://invidious.nerdvpn.de',
+      'https://invidious.f5.si'
     ];
 
     let lastError: Error | null = null;
@@ -109,13 +110,20 @@ async function getTranscript(url: string, preferredLanguage: string = 'it'): Pro
           }
         });
 
+        // Handle rate limiting - continue to next instance
+        if (res.status === 429) {
+          console.warn(`Rate limited on ${instance}, trying next instance...`);
+          continue;
+        }
+
         if (!res.ok) {
           throw new Error(`Instance ${instance} returned ${res.status}`);
         }
 
         const list = (await res.json()) as SubtitleTrack[];
         if (!Array.isArray(list) || list.length === 0) {
-          throw new Error(`No subtitles available on ${instance}`);
+          console.warn(`No subtitles available on ${instance}, trying next instance...`);
+          continue; // Try next instance instead of returning empty
         }
 
         // Enhanced language matching logic
@@ -184,7 +192,8 @@ async function getTranscript(url: string, preferredLanguage: string = 'it'): Pro
         }
 
         if (fullTranscript.trim().length === 0) {
-          throw new Error(`Empty transcript from ${instance}`);
+          console.warn(`Empty transcript from ${instance}, trying next instance...`);
+          continue; // Try next instance instead of returning empty
         }
 
         console.log(
@@ -194,12 +203,20 @@ async function getTranscript(url: string, preferredLanguage: string = 'it'): Pro
       } catch (error) {
         console.warn(`Failed to get transcript from ${instance}:`, error);
         lastError = error instanceof Error ? error : new Error(String(error));
-        continue; // Try next instance
+
+        // For non-429 errors, we might want to continue trying other instances
+        // rather than breaking immediately, depending on the error type
+        if (error instanceof Error && error.message.includes('429')) {
+          continue; // Rate limit, try next instance
+        }
+        // For other errors, continue trying other instances as well
+        continue;
       }
     }
 
     // If we get here, all instances failed
-    throw lastError || new Error('All Invidious instances failed');
+    const errorMessage = lastError?.message || 'Unknown error';
+    throw new Error(`Unable to fetch transcript from any instance (last error: ${errorMessage})`);
   } catch (error) {
     console.error('Error fetching transcript:', error);
     throw new Error('Could not fetch transcript for the provided URL.');
