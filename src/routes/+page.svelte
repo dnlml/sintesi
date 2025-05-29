@@ -20,6 +20,7 @@
     };
     data: {
       creditInfo: CreditCheck;
+      hasGodMode: boolean;
     };
   } = $props();
 
@@ -129,11 +130,11 @@
       </div>
     {/if}
 
-    {#if !form?.audioPath && creditInfo.hasCredits}
+    {#if !form?.audioPath && (creditInfo.hasCredits || data.hasGodMode)}
       <SummarizerForm bind:loading bind:url bind:selectedLanguage bind:selectedSummaryLength />
     {/if}
 
-    {#if form?.needsPayment || (!creditInfo.hasCredits && !form?.summary)}
+    {#if (form?.needsPayment || (!creditInfo.hasCredits && !form?.summary)) && !data.hasGodMode}
       <div class="text-center">
         <div class="mb-6 rounded-lg border border-amber-500/50 bg-amber-500/10 p-4">
           <h3 class="mb-2 text-lg font-semibold text-amber-200">
@@ -168,9 +169,35 @@
 
     {#if form?.error && !form?.needsPayment}
       <div
-        class="animate-fade-in mt-6 rounded-lg border border-red-500/50 bg-red-500/10 p-3 text-center text-red-400"
+        class="animate-fade-in mt-6 rounded-lg border p-4 text-center {form.error.includes(
+          'No credits were consumed'
+        )
+          ? 'border-blue-500/50 bg-blue-500/10'
+          : 'border-red-500/50 bg-red-500/10'}"
       >
-        {form.error}
+        {#if form.error.includes('No credits were consumed')}
+          <div class="mb-2 flex items-center justify-center gap-2 text-blue-400">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span class="font-semibold">Processing Error</span>
+          </div>
+          <p class="text-blue-300">{form.error}</p>
+        {:else}
+          <div class="text-red-400">{form.error}</div>
+        {/if}
       </div>
     {/if}
 
@@ -194,12 +221,12 @@
       <div class="mb-6 text-center">
         <button
           onclick={handleCreateNew}
-          disabled={!creditInfo.hasCredits}
+          disabled={!creditInfo.hasCredits && !data.hasGodMode}
           class="inline-block cursor-pointer rounded-lg bg-sky-600 px-6 py-2 font-semibold text-white shadow-md transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {'Create New Summary'}
         </button>
-        {#if !creditInfo.hasCredits}
+        {#if !creditInfo.hasCredits && !data.hasGodMode}
           <p class="mt-2 text-sm text-amber-400">
             No credits remaining. Purchase more to create new summaries.
           </p>
