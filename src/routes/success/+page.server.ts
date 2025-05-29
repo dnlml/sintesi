@@ -3,13 +3,20 @@ import Stripe from 'stripe';
 import { env } from '$env/dynamic/private';
 import { addCreditsToUser } from '$lib/server/credits';
 
-if (!env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY is not set');
-}
+// Lazy Stripe initialization - only fails when actually used, not during build
+let _stripe: Stripe | null = null;
 
-const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
-  apiVersion: '2025-04-30.basil'
-});
+function getStripe(): Stripe {
+  if (!_stripe) {
+    if (!env.STRIPE_SECRET_KEY) {
+      throw new Error('STRIPE_SECRET_KEY is not set');
+    }
+    _stripe = new Stripe(env.STRIPE_SECRET_KEY, {
+      apiVersion: '2025-04-30.basil'
+    });
+  }
+  return _stripe;
+}
 
 export const load: ServerLoad = async ({ url, cookies }) => {
   const sessionId = url.searchParams.get('session_id');
@@ -23,6 +30,7 @@ export const load: ServerLoad = async ({ url, cookies }) => {
 
   try {
     // Recupera la sessione da Stripe
+    const stripe = getStripe();
     const session = await stripe.checkout.sessions.retrieve(sessionId);
 
     if (session.payment_status === 'paid') {
