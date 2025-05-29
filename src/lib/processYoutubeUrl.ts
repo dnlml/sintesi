@@ -44,6 +44,19 @@ const elevenlabs = new ElevenLabsClient({
   apiKey: ELEVENLABS_API_KEY
 });
 
+// Supported language codes (matching frontend options)
+const SUPPORTED_LANGUAGES = ['en', 'it', 'fr', 'es', 'de'] as const;
+type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
+
+// Validate language code
+function validateLanguageCode(language: string): SupportedLanguage {
+  if (SUPPORTED_LANGUAGES.includes(language as SupportedLanguage)) {
+    return language as SupportedLanguage;
+  }
+  console.warn(`Unsupported language code: ${language}, defaulting to 'en'`);
+  return 'en';
+}
+
 // Helper function to extract video ID from YouTube URL
 function extractVideoId(url: string): string | null {
   const regex =
@@ -67,7 +80,7 @@ interface CaptionEntry {
 
 async function getTranscript(url: string, preferredLanguage: string = 'it'): Promise<string> {
   try {
-    console.log(`Fetching transcript for: ${url}`);
+    console.log(`Fetching transcript for: ${url} in language: ${preferredLanguage}`);
 
     // Extract video ID from URL
     const videoId = extractVideoId(url);
@@ -105,15 +118,51 @@ async function getTranscript(url: string, preferredLanguage: string = 'it'): Pro
           throw new Error(`No subtitles available on ${instance}`);
         }
 
-        // Find preferred language or fallback to first available
-        const track =
-          list.find((t: SubtitleTrack) => t.language_code === preferredLanguage) || list[0];
+        // Enhanced language matching logic
+        const findBestLanguageMatch = (
+          tracks: SubtitleTrack[],
+          targetLang: string
+        ): SubtitleTrack | null => {
+          // First try exact match
+          let match = tracks.find((t) => t.language_code === targetLang);
+          if (match) return match;
+
+          // Try with language variants (e.g., 'en' matches 'en-US', 'en-GB')
+          match = tracks.find((t) => t.language_code.startsWith(targetLang + '-'));
+          if (match) return match;
+
+          // Try partial match (e.g., 'en-US' when looking for 'en')
+          match = tracks.find((t) => t.language_code.split('-')[0] === targetLang);
+          if (match) return match;
+
+          return null;
+        };
+
+        // Find best language match or fallback to first available
+        const track = findBestLanguageMatch(list, preferredLanguage) || list[0];
 
         if (!track || !track.url) {
           throw new Error(`No valid subtitle tracks found on ${instance}`);
         }
 
-        console.log(`Using subtitles in language: ${track.language_code} from ${instance}`);
+        const actualLanguage = track.language_code;
+        const isExactMatch = actualLanguage === preferredLanguage;
+        const isVariantMatch =
+          actualLanguage.startsWith(preferredLanguage + '-') ||
+          actualLanguage.split('-')[0] === preferredLanguage;
+
+        if (isExactMatch) {
+          console.log(`✓ Found exact language match: ${actualLanguage} from ${instance}`);
+        } else if (isVariantMatch) {
+          console.log(
+            `~ Found language variant: ${actualLanguage} (requested: ${preferredLanguage}) from ${instance}`
+          );
+        } else {
+          console.log(
+            `! Using fallback language: ${actualLanguage} (requested: ${preferredLanguage}) from ${instance}`
+          );
+        }
+
         const captionsRes = await fetch(track.url, {
           headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
@@ -138,7 +187,9 @@ async function getTranscript(url: string, preferredLanguage: string = 'it'): Pro
           throw new Error(`Empty transcript from ${instance}`);
         }
 
-        console.log(`Transcript fetched successfully via ${instance}`);
+        console.log(
+          `Transcript fetched successfully via ${instance} (${fullTranscript.length} characters)`
+        );
         return fullTranscript;
       } catch (error) {
         console.warn(`Failed to get transcript from ${instance}:`, error);
@@ -366,15 +417,20 @@ export async function processYoutubeUrl(
   summaryLengthKey: string
 ): Promise<{ summary: string; audioPath: string; s3Url?: string }> {
   const startTime = Date.now();
+
+  // Validate and normalize language code
+  const validatedLanguage = validateLanguageCode(language);
+
   loggers.video.info(
-    { url: videoUrl, language, summaryLength: summaryLengthKey },
+    { url: videoUrl, language: validatedLanguage, summaryLength: summaryLengthKey },
     'Starting video processing'
   );
 
   try {
-    // Get transcript and metadata (including description)
-    const transcript = await getTranscript(videoUrl, language);
-    const { channel, title, description } = await getVideoMetadata(videoUrl); // Get metadata once
+    // Get transcript in the requested language and metadata
+    // Language parameter flows through: Frontend → getTranscript (subtitle language) → summarizeTranscript (output language) → generateAudioSummary (voice language)
+    const transcript = await getTranscript(videoUrl, validatedLanguage);
+    const { channel, title, description } = await getVideoMetadata(videoUrl);
     const cleanedDescription = cleanDescription(description);
 
     const summaryLengthValue = summaryLengthMap[summaryLengthKey] || MAX_SUMMARY_LINE_LENGTH_MEDIUM;
@@ -383,7 +439,7 @@ export async function processYoutubeUrl(
     const summary = await summarizeTranscript(
       transcript,
       cleanedDescription,
-      language,
+      validatedLanguage,
       summaryLengthValue
     );
 
@@ -391,12 +447,12 @@ export async function processYoutubeUrl(
       summary,
       channel,
       title,
-      language,
+      language: validatedLanguage,
       speed: 1.0
     });
 
     const duration = Date.now() - startTime;
-    logEvent.videoProcessing(videoUrl, language, duration, true);
+    logEvent.videoProcessing(videoUrl, validatedLanguage, duration, true);
     loggers.video.info(
       {
         url: videoUrl,
@@ -415,7 +471,7 @@ export async function processYoutubeUrl(
     const duration = Date.now() - startTime;
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
-    logEvent.videoProcessing(videoUrl, language, duration, false, errorMessage);
+    logEvent.videoProcessing(videoUrl, validatedLanguage, duration, false, errorMessage);
     loggers.video.error(
       {
         url: videoUrl,
