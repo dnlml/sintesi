@@ -15,10 +15,12 @@ if [ -f .env ]; then
 fi
 
 echo "🔐 Logging into GitHub Container Registry..."
-echo "$GITHUB_TOKEN" | docker login ghcr.io -u dnlml --password-stdin --config /tmp/docker-config
+mkdir -p /tmp/docker-config
+export DOCKER_CONFIG=/tmp/docker-config
+echo "$GITHUB_TOKEN" | docker login ghcr.io -u dnlml --password-stdin
 
 echo "📥 Pulling latest Docker image..."
-DOCKER_CONFIG=/tmp/docker-config docker pull ghcr.io/dnlml/sintesi:latest
+docker pull ghcr.io/dnlml/sintesi:latest
 
 echo "🛑 Stopping existing container..."
 docker-compose down || true
@@ -26,8 +28,9 @@ docker-compose down || true
 echo "🧹 Cleaning up old images..."
 docker image prune -f
 
-# Clean up temporary Docker config
+# Clean up temporary Docker config and reset DOCKER_CONFIG
 rm -rf /tmp/docker-config
+unset DOCKER_CONFIG
 
 echo "📦 Starting new container..."
 docker-compose up -d
