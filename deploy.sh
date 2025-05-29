@@ -14,6 +14,9 @@ if [ -f .env ]; then
     set +a  # stop automatically exporting
 fi
 
+echo "🔐 Logging into GitHub Container Registry..."
+echo "$GITHUB_TOKEN" | docker login ghcr.io -u dnlml --password-stdin
+
 echo "📥 Pulling latest Docker image..."
 docker pull ghcr.io/dnlml/sintesi:latest
 
