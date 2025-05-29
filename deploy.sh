@@ -14,11 +14,6 @@ if [ -f .env ]; then
     set +a  # stop automatically exporting
 fi
 
-echo "🔐 Logging into GitHub Container Registry..."
-mkdir -p /tmp/docker-config
-export DOCKER_CONFIG=/tmp/docker-config
-echo "$GITHUB_TOKEN" | docker login ghcr.io -u dnlml --password-stdin
-
 echo "📥 Pulling latest Docker image..."
 docker pull ghcr.io/dnlml/sintesi:latest
 
@@ -27,10 +22,6 @@ docker-compose down || true
 
 echo "🧹 Cleaning up old images..."
 docker image prune -f
-
-# Clean up temporary Docker config and reset DOCKER_CONFIG
-rm -rf /tmp/docker-config
-unset DOCKER_CONFIG
 
 echo "📦 Starting new container..."
 docker-compose up -d
