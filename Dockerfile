@@ -1,8 +1,8 @@
 # Use official Node.js image
-FROM node:20-alpine AS base
+FROM node:20-alpine
 
-# Install pnpm globally
-RUN npm install -g pnpm
+# Install pnpm with specific version to match local environment
+RUN npm install -g pnpm@10.10.0
 
 # Create app directory
 WORKDIR /app
@@ -17,11 +17,11 @@ RUN pnpm install --frozen-lockfile --prod
 COPY .svelte-kit/output ./
 
 # Create non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S sintesi -u 1001
+RUN addgroup -g 1001 -S sintesi && \
+    adduser -S sintesi -u 1001
 
 # Create necessary directories and set permissions
-RUN mkdir -p ./static/summaries && chown -R sintesi:nodejs /app
+RUN mkdir -p ./static/summaries && chown -R sintesi:sintesi /app
 
 # Switch to non-root user
 USER sintesi
