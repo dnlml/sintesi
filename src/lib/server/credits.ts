@@ -215,6 +215,84 @@ export async function consumeCredit(event: RequestEvent): Promise<boolean> {
   return false;
 }
 
+// Restituisce un credito (rollback)
+export async function refundCredit(event: RequestEvent): Promise<boolean> {
+  const userEmail = event.cookies.get('user_email');
+
+  if (userEmail) {
+    // Utente registrato
+    loggers.credits.debug({ email: userEmail }, 'Attempting to refund credit for registered user');
+
+    const user = await db.select().from(users).where(eq(users.email, userEmail)).limit(1);
+
+    if (user.length > 0) {
+      const credits = await db
+        .select()
+        .from(userCredits)
+        .where(eq(userCredits.userId, user[0].id))
+        .limit(1);
+
+      if (credits.length > 0) {
+        await db
+          .update(userCredits)
+          .set({
+            credits: credits[0].credits + 1,
+            updatedAt: new Date()
+          })
+          .where(eq(userCredits.userId, user[0].id));
+
+        loggers.credits.info(
+          {
+            email: userEmail,
+            creditsRemaining: credits[0].credits + 1
+          },
+          'Credit refunded for registered user'
+        );
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Utente anonimo
+  const sessionId = event.cookies.get('session_id');
+  if (!sessionId) {
+    loggers.credits.warn('No session ID found for anonymous user refund');
+    return false;
+  }
+
+  loggers.credits.debug({ sessionId }, 'Attempting to refund credit for anonymous user');
+
+  const browserFingerprint = createBrowserFingerprint(event);
+  const session = await getOrCreateSession(sessionId, browserFingerprint);
+
+  if (session.creditsUsed > 0) {
+    await db
+      .update(sessions)
+      .set({
+        creditsUsed: session.creditsUsed - 1,
+        lastUsedAt: new Date()
+      })
+      .where(eq(sessions.sessionId, sessionId));
+
+    loggers.credits.info(
+      {
+        sessionId,
+        creditsUsed: session.creditsUsed - 1,
+        creditsRemaining: FREE_TRIAL_CREDITS - (session.creditsUsed - 1)
+      },
+      'Credit refunded for anonymous user'
+    );
+    return true;
+  }
+
+  loggers.credits.warn(
+    { sessionId, creditsUsed: session.creditsUsed },
+    'No credits to refund for anonymous user'
+  );
+  return false;
+}
+
 // Aggiunge crediti a un utente registrato
 export async function addCreditsToUser(email: string, creditsToAdd: number): Promise<boolean> {
   try {

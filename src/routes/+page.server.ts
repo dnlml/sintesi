@@ -1,6 +1,7 @@
 import { env } from '$env/dynamic/private';
 import type { Actions, ServerLoad } from '@sveltejs/kit';
-import { checkCredits, consumeCredit } from '$lib/server/credits';
+import { checkCredits, consumeCredit, refundCredit } from '$lib/server/credits';
+import { loggers } from '$lib/server/logger';
 
 export const load: ServerLoad = async (event) => {
   const creditInfo = await checkCredits(event);
@@ -61,7 +62,7 @@ export const actions: Actions = {
     }
 
     try {
-      // Consuma un credito prima di procedere
+      // Consuma un credito solo dopo aver validato tutti gli input
       const creditConsumed = await consumeCredit(event);
       if (!creditConsumed) {
         return {
@@ -78,8 +79,10 @@ export const actions: Actions = {
 
       const result = await res.json();
       if (!res.ok) {
-        // Se l'API fallisce, restituiamo il credito (opzionale)
-        // Per ora non implementiamo il rollback, ma è una feature da considerare
+        // Restituisce il credito se l'elaborazione fallisce
+        await refundCredit(event);
+        loggers.credits.info('Credit refunded due to processing failure');
+
         return {
           error: result.error || 'Generic error',
           creditInfo: await checkCredits(event)
@@ -92,6 +95,10 @@ export const actions: Actions = {
         creditInfo: await checkCredits(event)
       };
     } catch (e) {
+      // Restituisce il credito se c'è un'eccezione durante l'elaborazione
+      await refundCredit(event);
+      loggers.credits.info('Credit refunded due to exception during processing');
+
       return {
         error: e instanceof Error ? e.message : 'Generic error',
         creditInfo: await checkCredits(event)
