@@ -13,8 +13,8 @@ WORKDIR /app
 # Copy package files
 COPY package.json pnpm-lock.yaml ./
 
-# Install dependencies (use --force to recreate lockfile if needed)
-RUN pnpm install --force --prod
+# Install dependencies (install all dependencies, not just production)
+RUN pnpm install --force
 
 # Copy built application
 COPY .svelte-kit/output ./
