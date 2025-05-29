@@ -7,9 +7,11 @@ echo "🚀 Starting deployment process..."
 # Navigate to the sintesi directory (not app subdirectory)
 cd ~/sites/sintesi
 
-# Load environment variables
+# Load environment variables safely
 if [ -f .env ]; then
-    export $(cat .env | xargs)
+    set -a  # automatically export all variables
+    source .env
+    set +a  # stop automatically exporting
 fi
 
 echo "📥 Pulling latest Docker image..."
