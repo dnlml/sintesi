@@ -13,29 +13,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
       - name: Install pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 8
-
-      - name: Install dependencies
-        run: pnpm install
-
-      - name: Build SvelteKit app
-        env:
-          NODE_ENV: production
-        run: pnpm run build
-
-      - name: Build and push Docker image
-        run: |
-          echo ${{ secrets.PERSONAL_ACCESS_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker build -t ghcr.io/${{ github.repository_owner }}/sintesi:latest .
-          docker push ghcr.io/${{ github.repository_owner }}/sintesi:latest
 
       - name: Copy deployment files to VPS
         env:
@@ -45,9 +26,8 @@ jobs:
           echo "$SSH_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -p 29 51.178.44.81 >> ~/.ssh/known_hosts
-          rsync -avz -e "ssh -i ~/.ssh/id_ed25519 -p 29" \
-            docker-compose.yml deploy.sh \
-            dnlml@51.178.44.81:~/sites/sintesi/
+          rsync -avz --delete -e "ssh -i ~/.ssh/id_ed25519 -p 29" \
+            . dnlml@51.178.44.81:~/sites/sintesi/
 
       - name: Create .env file on VPS
         env:

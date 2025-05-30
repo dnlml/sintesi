@@ -1,37 +1,25 @@
-version: '3.7'
+version: '3'
 
 services:
   sintesi:
-    image: ghcr.io/dnlml/sintesi:latest
-    container_name: sintesi-app
-    restart: unless-stopped
-    environment:
-      - NODE_ENV=production
-      - PORT=3000
-      - HOST=0.0.0.0
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - AWS_REGION=${AWS_REGION}
-      - AWS_S3_BUCKET=${AWS_S3_BUCKET}
-      - DATABASE_URL=${DATABASE_URL}
-      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
-      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
-      - RESEND_API_KEY=${RESEND_API_KEY}
-      - EMAIL_FROM=${EMAIL_FROM}
-      - EMAIL_REPLY_TO=${EMAIL_REPLY_TO}
-      - TEST_MODE_TOKEN=${TEST_MODE_TOKEN}
-      - GOD_MODE_TOKEN=${GOD_MODE_TOKEN}
-      - VIRTUAL_HOST=${VIRTUAL_HOST}
-      - LETSENCRYPT_HOST=${LETSENCRYPT_HOST}
-      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+    image: node:20
+    working_dir: /app
     volumes:
-      - ./public:/app/static/summaries
+      - ./:/app
+    command: sh -c "pnpm install --frozen-lockfile && pnpm build && node ./server/index.js"
+    expose:
+      - 3000
+    environment:
+      VIRTUAL_HOST: ${VIRTUAL_HOST}
+      LETSENCRYPT_HOST: ${LETSENCRYPT_HOST}
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+      NODE_ENV: production
+      PORT: 3000
+      HOST: 0.0.0.0
+    container_name: sintesi_app
+    restart: always
     networks:
       - nginx-proxy
-    expose:
-      - '3000'
 
 networks:
   nginx-proxy:

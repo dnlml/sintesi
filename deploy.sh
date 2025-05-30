@@ -14,17 +14,11 @@ if [ -f .env ]; then
     set +a  # stop automatically exporting
 fi
 
-echo "📥 Pulling latest Docker image..."
-docker pull ghcr.io/dnlml/sintesi:latest
-
 echo "🛑 Stopping existing container..."
 docker-compose down || true
 
-echo "🧹 Cleaning up old images..."
-docker image prune -f
-
-echo "📦 Starting new container..."
-docker-compose up -d
+echo "📦 Starting new container (build will run inside)..."
+docker-compose up -d --build
 
 echo "⏳ Waiting for container to be ready..."
 sleep 10
