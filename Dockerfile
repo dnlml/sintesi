@@ -1,23 +1,42 @@
-# Use official Node.js image
-FROM node:20-alpine
+# ---- Build Stage ----
+FROM node:20-alpine AS build
 
 # Add label to link container image to GitHub repository
 LABEL org.opencontainers.image.source=https://github.com/dnlml/sintesi
 
-# Install pnpm with specific version to match local environment
+# Install pnpm
 RUN npm install -g pnpm@10.10.0
 
 # Create app directory
 WORKDIR /app
 
-# Copy package files
+# Copy package files and install dependencies
 COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
-# Install dependencies (install all dependencies, not just production)
-RUN pnpm install --force
+# Copy the rest of the source code
+COPY . .
 
-# Copy built application
-COPY .svelte-kit/output ./
+# Build the SvelteKit app
+RUN pnpm build
+
+# ---- Production Stage (Slim) ----
+FROM node:20-alpine AS prod
+
+WORKDIR /app
+
+# Install pnpm (runtime, for node_modules if needed)
+RUN npm install -g pnpm@10.10.0
+
+# Copy only production node_modules
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/package.json ./
+COPY --from=build /app/pnpm-lock.yaml ./
+
+# Copy built output and server files
+COPY --from=build /app/.svelte-kit ./
+COPY --from=build /app/static ./static
+COPY --from=build /app/server ./server
 
 # Create non-root user
 RUN addgroup -g 1001 -S sintesi && \
