@@ -1,25 +1,23 @@
-version: '3'
+version: '3.7'
 
 services:
-  sintesi:
-    image: node:20
-    working_dir: /app
-    volumes:
-      - ./:/app
-    command: sh -c "pnpm install --frozen-lockfile && pnpm build && node ./server/index.js"
-    expose:
-      - 3000
+  sintesi-app:
+    image: sintesi-app:latest
+    container_name: sintesi-app
+    restart: unless-stopped
+    env_file:
+      - .env
     environment:
-      VIRTUAL_HOST: ${VIRTUAL_HOST}
-      LETSENCRYPT_HOST: ${LETSENCRYPT_HOST}
-      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+      VIRTUAL_HOST: sintesi.tech
+      LETSENCRYPT_HOST: sintesi.tech
+      LETSENCRYPT_EMAIL: hello@sintesi.tech
       NODE_ENV: production
       PORT: 3000
       HOST: 0.0.0.0
-    container_name: sintesi_app
-    restart: always
     networks:
       - nginx-proxy
+    expose:
+      - 3000
 
 networks:
   nginx-proxy:
