@@ -17,6 +17,8 @@ RUN pnpm install --frozen-lockfile
 # Copy the rest of the source code
 COPY . .
 
+ENV LOG_LEVEL=info
+ENV NODE_ENV=production
 # Build the SvelteKit app
 RUN pnpm build
 
