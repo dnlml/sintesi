@@ -19,6 +19,10 @@ COPY . .
 
 ENV LOG_LEVEL=info
 ENV NODE_ENV=production
+ENV DATABASE_URL=postgres://dummy:dummy@localhost:5432/dummy
+ENV OPENAI_API_KEY=dummy
+ENV ELEVENLABS_API_KEY=dummy
+ENV RESEND_API_KEY=dummy
 # Build the SvelteKit app
 RUN pnpm build
 
