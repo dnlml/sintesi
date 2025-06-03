@@ -61,8 +61,6 @@ EXPOSE 3000
 # Set environment variables
 ENV PORT=3000
 ENV HOST=0.0.0.0
-# Workaround for node:sqlite error - app uses PostgreSQL, not SQLite
-ENV NODE_OPTIONS="--no-warnings"
 
 # Start the server using --env-file as recommended by SvelteKit
 CMD ["node", "--env-file=.env", "index.js"]

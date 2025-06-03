@@ -13,16 +13,6 @@ export default defineConfig({
       outdir: './src/lib/paraglide'
     })
   ],
-  resolve: {
-    alias: {
-      // Handle node:sqlite import issue - we use PostgreSQL, not SQLite
-      'node:sqlite': new URL('./src/lib/empty-sqlite.js', import.meta.url).pathname
-    }
-  },
-  ssr: {
-    // Externalize node:sqlite for SSR builds
-    external: ['node:sqlite']
-  },
   test: {
     workspace: [
       {
