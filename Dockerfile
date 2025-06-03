@@ -58,5 +58,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOST=0.0.0.0
 
-# Start the application
-CMD ["sh", "-c", "echo 'Starting app...' && node /app/.svelte-kit/output/server/index.js || echo 'App crashed with code $?'"]
+# Use --env-file flag to load environment variables from .env file
+CMD ["node", "--env-file=.env", "server/index.js"]
