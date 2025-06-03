@@ -38,9 +38,7 @@ RUN npm install -g pnpm@10.10.0
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./
 COPY --from=build /app/pnpm-lock.yaml ./
-
-# Copy built output and server files
-COPY --from=build /app/.svelte-kit ./
+COPY --from=build /app/.svelte-kit ./.svelte-kit
 COPY --from=build /app/static ./static
 
 # Create non-root user
