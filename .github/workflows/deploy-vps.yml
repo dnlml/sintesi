@@ -9,13 +9,22 @@ jobs:
   deploy:
     runs-on: self-hosted
     steps:
-      - name: Checkout code
+      - name: Navigate to deployment directory
+        run: |
+          mkdir -p /home/dnlml/sites/sintesi
+          cd /home/dnlml/sites/sintesi
+
+      - name: Checkout code to deployment directory
         uses: actions/checkout@v4
+        with:
+          path: /home/dnlml/sites/sintesi
 
       - name: Build Docker image
+        working-directory: /home/dnlml/sites/sintesi
         run: docker build -t sintesi-app:latest .
 
       - name: Create .env file from secrets
+        working-directory: /home/dnlml/sites/sintesi
         run: |
           cat <<EOF > .env
           SE_VABBE="no!"
@@ -38,7 +47,9 @@ jobs:
           EOF
 
       - name: Stop and remove old container (if exists)
+        working-directory: /home/dnlml/sites/sintesi
         run: docker-compose down || true
 
       - name: Start new container with docker-compose
+        working-directory: /home/dnlml/sites/sintesi
         run: docker-compose up -d --force-recreate
