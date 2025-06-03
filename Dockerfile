@@ -31,14 +31,18 @@ FROM node:20-alpine AS prod
 
 WORKDIR /app
 
-# Install pnpm (runtime, for node_modules if needed)
+# Install pnpm and production dependencies
 RUN npm install -g pnpm@10.10.0
 
-# Copy only production node_modules
-COPY --from=build /app/node_modules ./node_modules
+# Copy package files
 COPY --from=build /app/package.json ./
 COPY --from=build /app/pnpm-lock.yaml ./
-COPY --from=build /app/.svelte-kit ./.svelte-kit
+
+# Install only production dependencies in the final stage
+RUN pnpm install --prod --frozen-lockfile
+
+# Copy the built application output
+COPY --from=build /app/.svelte-kit/output ./
 COPY --from=build /app/static ./static
 
 # Create non-root user
@@ -58,5 +62,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOST=0.0.0.0
 
-# Use --env-file flag to load environment variables from .env file
-CMD ["node", "--env-file=.env", "server/index.js"]
+# Start the server (docker-compose will provide env vars)
+CMD ["node", "server/index.js"]
