@@ -59,4 +59,4 @@ ENV PORT=3000
 ENV HOST=0.0.0.0
 
 # Start the application
-CMD ["node", "/app/.svelte-kit/output/server/index.js"]
+CMD ["sh", "-c", "echo 'Starting app...' && node /app/.svelte-kit/output/server/index.js || echo 'App crashed with code $?'"]
