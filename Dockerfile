@@ -42,7 +42,6 @@ COPY --from=build /app/pnpm-lock.yaml ./
 # Copy built output and server files
 COPY --from=build /app/.svelte-kit ./
 COPY --from=build /app/static ./static
-COPY --from=build /app/server ./server
 
 # Create non-root user
 RUN addgroup -g 1001 -S sintesi && \
@@ -58,9 +57,8 @@ USER sintesi
 EXPOSE 3000
 
 # Set environment variables
-ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOST=0.0.0.0
 
 # Start the application
-CMD ["node", "server/index.js"]
+CMD ["node", ".svelte-kit/output/server/index.js"]
