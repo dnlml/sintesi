@@ -41,8 +41,8 @@ COPY --from=build /app/pnpm-lock.yaml ./
 # Install only production dependencies in the final stage
 RUN pnpm install --prod --frozen-lockfile
 
-# Copy the built application output
-COPY --from=build /app/.svelte-kit/output ./
+# Copy the built application output (adapter-node creates 'build' directory)
+COPY --from=build /app/build ./
 COPY --from=build /app/static ./static
 
 # Create non-root user
@@ -62,5 +62,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOST=0.0.0.0
 
-# Start the server (docker-compose will provide env vars)
-CMD ["node", "server/index.js"]
+# Start the server (adapter-node entry point is index.js)
+CMD ["node", "index.js"]
