@@ -1,5 +1,5 @@
 # ---- Build Stage ----
-FROM node:20-alpine AS build
+FROM node:22-alpine AS build
 
 # Add label to link container image to GitHub repository
 LABEL org.opencontainers.image.source=https://github.com/dnlml/sintesi
@@ -27,7 +27,7 @@ ENV RESEND_API_KEY=dummy
 RUN pnpm build
 
 # ---- Production Stage (Slim) ----
-FROM node:20-alpine AS prod
+FROM node:22-alpine AS prod
 
 WORKDIR /app
 
