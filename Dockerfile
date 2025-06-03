@@ -62,5 +62,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOST=0.0.0.0
 
-# Start the server (adapter-node entry point is index.js)
-CMD ["node", "index.js"]
+# Start the server using --env-file as recommended by SvelteKit
+CMD ["node", "--env-file=.env", "index.js"]
