@@ -18,6 +18,7 @@ jobs:
       - name: Create .env file from secrets
         run: |
           cat <<EOF > .env
+          SE_VABBE="no!"
           OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
           ELEVENLABS_API_KEY=${{ secrets.ELEVENLABS_API_KEY }}
           PUBLIC_SUPABASE_URL=${{ secrets.PUBLIC_SUPABASE_URL }}
