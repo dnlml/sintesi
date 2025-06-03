@@ -17,7 +17,7 @@ services:
     command: >
       sh -c "
       echo 'Creating .env file from environment variables...' &&
-      printenv | grep -E '^(OPENAI_API_KEY|ELEVENLABS_API_KEY|DATABASE_URL|AWS_|STRIPE_|RESEND_API_KEY|EMAIL_|LOG_LEVEL|NODE_ENV|TEST_MODE_TOKEN|GOD_MODE_TOKEN)=' > .env &&
+      printenv | grep -E '^(OPENAI_API_KEY|ELEVENLABS_API_KEY|DATABASE_URL|AWS_|STRIPE_|RESEND_API_KEY|EMAIL_|LOG_LEVEL|NODE_ENV|TEST_MODE_TOKEN|GOD_MODE_TOKEN|PUBLIC_SUPABASE_)=' > .env &&
       echo '.env file created' &&
       node --env-file=.env index.js
       "
