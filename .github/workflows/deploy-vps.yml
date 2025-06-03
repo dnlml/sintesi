@@ -9,15 +9,14 @@ jobs:
   deploy:
     runs-on: self-hosted
     steps:
-      - name: Navigate to deployment directory
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Prepare deployment directory
         run: |
           mkdir -p /home/dnlml/sites/sintesi
+          cp -r . /home/dnlml/sites/sintesi/
           cd /home/dnlml/sites/sintesi
-
-      - name: Checkout code to deployment directory
-        uses: actions/checkout@v4
-        with:
-          path: /home/dnlml/sites/sintesi
 
       - name: Build Docker image
         working-directory: /home/dnlml/sites/sintesi
