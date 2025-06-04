@@ -25,6 +25,8 @@ services:
       - nginx-proxy
     expose:
       - 3000
+    volumes:
+      - ./acme-challenge:/app/static/.well-known/acme-challenge
 
 networks:
   nginx-proxy:
