@@ -12,6 +12,8 @@ services:
       LETSENCRYPT_HOST: sintesi.tech
       LETSENCRYPT_EMAIL: hello@sintesi.tech
       NODE_ENV: production
+      VIRTUAL_PORT: 3000
+      EXPOSE: 3000
       PORT: 3000
       HOST: 0.0.0.0
     command: >
