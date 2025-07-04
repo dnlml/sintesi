@@ -46,6 +46,7 @@ jobs:
           GOD_MODE_TOKEN=${{ secrets.GOD_MODE_TOKEN }}
           OXYLAB_USERNAME=${{ secrets.OXYLAB_USERNAME }}
           OXYLAB_PASSWORD=${{ secrets.OXYLAB_PASSWORD }}
+          BASE_URL=${{ secrets.BASE_URL }}
           EOF
 
       - name: Stop and remove old container (if exists)

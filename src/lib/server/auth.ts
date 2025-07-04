@@ -21,7 +21,7 @@ export async function sendMagicLink(email: string, token: string): Promise<boole
   try {
     loggers.auth.info({ email }, 'Attempting to send magic link');
 
-    const magicLink = `http://localhost:5175/login?token=${token}`;
+    const magicLink = `${process.env.BASE_URL}/login?token=${token}`;
 
     // Crea template email
     const emailTemplate = createMagicLinkEmail(email, magicLink);
