@@ -44,6 +44,8 @@ jobs:
           NODE_ENV=${{ secrets.NODE_ENV }}
           TEST_MODE_TOKEN=${{ secrets.TEST_MODE_TOKEN }}
           GOD_MODE_TOKEN=${{ secrets.GOD_MODE_TOKEN }}
+          OXYLAB_USERNAME=${{ secrets.OXYLAB_USERNAME }}
+          OXYLAB_PASSWORD=${{ secrets.OXYLAB_PASSWORD }}
           EOF
 
       - name: Stop and remove old container (if exists)

@@ -124,3 +124,8 @@ The application uses the following server-side API endpoints:
 ---
 
 This README provides a good starting point. You can expand it further with sections like "Project Structure", "Contributing", "License", or more detailed API documentation as needed.
+
+# Youtube transcript fetch
+
+Do it with oxylab:
+https://developers.oxylabs.io/scraping-solutions/web-scraper-api/targets/youtube/youtube-transcript

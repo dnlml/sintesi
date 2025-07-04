@@ -1,10 +1,9 @@
 #!/usr/bin/env node
-import { YoutubeTranscript, type TranscriptResponse } from 'youtube-transcript';
+import { createWriteStream as fsCreateWriteStream, promises as fsPromises } from 'fs';
+import * as path from 'path';
+import * as dotenv from 'dotenv';
 import OpenAI from 'openai';
 import { ElevenLabsClient } from 'elevenlabs';
-import * as dotenv from 'dotenv';
-import { promises as fsPromises, createWriteStream as fsCreateWriteStream } from 'fs';
-import * as path from 'path';
 import ytdl from '@distube/ytdl-core';
 import { pipeline } from 'node:stream/promises';
 import { uploadFileToS3, generateS3Key, type UploadResult } from './s3Client.js';
@@ -45,17 +44,108 @@ const elevenlabs = new ElevenLabsClient({
   apiKey: ELEVENLABS_API_KEY
 });
 
-async function getTranscript(url: string): Promise<string> {
+async function getTranscript(url: string, language: string): Promise<string> {
+  const OXYLAB_USERNAME = process.env.OXYLAB_USERNAME;
+  const OXYLAB_PASSWORD = process.env.OXYLAB_PASSWORD;
+  if (!OXYLAB_USERNAME || !OXYLAB_PASSWORD) {
+    console.error('Error: OXYLAB_USERNAME or OXYLAB_PASSWORD not found in .env file');
+    throw new Error('Missing Oxylab credentials');
+  }
+
+  function extractVideoId(youtubeUrl: string): string | null {
+    const patterns = [
+      /[?&]v=([a-zA-Z0-9_-]{11})/,
+      /youtu\.be\/([a-zA-Z0-9_-]{11})/,
+      /embed\/([a-zA-Z0-9_-]{11})/
+    ];
+    for (const pattern of patterns) {
+      const match = youtubeUrl.match(pattern);
+      if (match) return match[1];
+    }
+    return null;
+  }
+  const videoId = extractVideoId(url);
+  if (!videoId) {
+    throw new Error('Could not extract video ID from URL');
+  }
+
+  const body = {
+    source: 'youtube_transcript',
+    query: videoId,
+    context: [
+      { key: 'language_code', value: language },
+      { key: 'transcript_origin', value: 'auto_generated' }
+    ]
+  };
+
   try {
-    console.log(`Fetching transcript for: ${url}`);
-    const transcript = await YoutubeTranscript.fetchTranscript(url);
-    // Combine transcript parts into a single string
-    const fullTranscript = transcript.map((entry: TranscriptResponse) => entry.text).join(' ');
-    console.log('Transcript fetched successfully.');
-    return fullTranscript;
+    const response = await fetch('https://realtime.oxylabs.io/v1/queries', {
+      method: 'post',
+      body: JSON.stringify(body),
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization:
+          'Basic ' + Buffer.from(`${OXYLAB_USERNAME}:${OXYLAB_PASSWORD}`).toString('base64')
+      }
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Oxylab API error: ${response.status} ${response.statusText} - ${errorText}`);
+    }
+
+    interface TranscriptRun {
+      text: string;
+    }
+    interface TranscriptSegment {
+      transcriptSegmentRenderer?: {
+        snippet: {
+          runs: TranscriptRun[];
+        };
+      };
+    }
+    interface OxylabResponse {
+      results?: {
+        content?: TranscriptSegment[];
+      }[];
+    }
+
+    const responseData: OxylabResponse = await response.json();
+    const content = responseData?.results?.[0]?.content;
+
+    if (!Array.isArray(content)) {
+      console.error(
+        'Content in Oxylab response is not an array or is missing. Full response:',
+        JSON.stringify(responseData, null, 2)
+      );
+      throw new Error('Content in Oxylab response is not an array or is missing.');
+    }
+
+    const transcript = content
+      .filter(
+        (
+          item
+        ): item is {
+          transcriptSegmentRenderer: NonNullable<TranscriptSegment['transcriptSegmentRenderer']>;
+        } => !!item.transcriptSegmentRenderer
+      )
+      .flatMap((item) => item.transcriptSegmentRenderer.snippet.runs)
+      .map((run) => run.text.replace(/\\n/g, ' ').trim())
+      .join(' ')
+      .trim();
+
+    if (!transcript) {
+      console.error(
+        'Could not extract transcript from Oxylab response. Full response:',
+        JSON.stringify(responseData, null, 2)
+      );
+      throw new Error('Could not extract transcript from Oxylab response');
+    }
+
+    return transcript;
   } catch (error) {
-    console.error('Error fetching transcript:', error);
-    throw new Error('Could not fetch transcript for the provided URL.');
+    console.error('Error in getTranscript:', error);
+    throw error;
   }
 }
 
@@ -277,7 +367,7 @@ export async function processYoutubeUrl(
 
   try {
     // Get transcript and metadata (including description)
-    const transcript = await getTranscript(videoUrl);
+    const transcript = await getTranscript(videoUrl, language);
     const { channel, title, description } = await getVideoMetadata(videoUrl); // Get metadata once
     const cleanedDescription = cleanDescription(description);
 
