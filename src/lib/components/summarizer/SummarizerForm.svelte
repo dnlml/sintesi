@@ -2,7 +2,12 @@
   import { m } from '$lib/paraglide/messages.js';
   import { enhance } from '$app/forms';
 
-  let { loading, url, selectedLanguage, selectedSummaryLength } = $props<{
+  let {
+    loading = $bindable(),
+    url = $bindable(),
+    selectedLanguage = $bindable(),
+    selectedSummaryLength = $bindable()
+  } = $props<{
     loading?: boolean;
     url?: string;
     selectedLanguage?: string;

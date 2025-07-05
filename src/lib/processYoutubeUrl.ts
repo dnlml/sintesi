@@ -206,9 +206,12 @@ ${transcript}`;
 
 async function getVideoMetadata(
   url: string
-): Promise<{ channel: string; title: string; description: string }> {
+): Promise<{ channel: string; title: string; description: string; transcriptLanguage: string }> {
   try {
     const info = await ytdl.getInfo(url);
+    const transcriptLanguage =
+      info.player_response.captions?.playerCaptionsTracklistRenderer.captionTracks[0]
+        .languageCode || 'en';
 
     // Sanitize the filename by removing special characters and spaces
     const sanitizeForFilename = (str: string) =>
@@ -220,14 +223,16 @@ async function getVideoMetadata(
     return {
       channel: sanitizeForFilename(info.videoDetails.ownerChannelName || 'unknown_channel'),
       title: sanitizeForFilename(info.videoDetails.title || 'unknown_title'),
-      description: info.videoDetails.description || ''
+      description: info.videoDetails.description || '',
+      transcriptLanguage
     };
   } catch (error) {
     console.error('Error fetching video metadata:', error);
     return {
       channel: 'unknown_channel',
       title: 'unknown_title',
-      description: ''
+      description: '',
+      transcriptLanguage: 'en'
     };
   }
 }
@@ -367,8 +372,8 @@ export async function processYoutubeUrl(
 
   try {
     // Get transcript and metadata (including description)
-    const transcript = await getTranscript(videoUrl, language);
-    const { channel, title, description } = await getVideoMetadata(videoUrl); // Get metadata once
+    const { channel, title, description, transcriptLanguage } = await getVideoMetadata(videoUrl); // Get metadata once
+    const transcript = await getTranscript(videoUrl, transcriptLanguage);
     const cleanedDescription = cleanDescription(description);
 
     const summaryLengthValue = summaryLengthMap[summaryLengthKey] || MAX_SUMMARY_LINE_LENGTH_MEDIUM;
