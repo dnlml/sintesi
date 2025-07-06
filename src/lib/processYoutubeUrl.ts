@@ -14,6 +14,7 @@ dotenv.config();
 const MAX_SUMMARY_LINE_LENGTH_MEDIUM = 30;
 const MAX_SUMMARY_LINE_LENGTH_SHORT = 10;
 const MAX_SUMMARY_LINE_LENGTH_LONG = 85;
+const MAX_ATTEMPTS = 3;
 
 // Check that API keys are present
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
@@ -359,10 +360,15 @@ async function generateAudioSummary({
   }
 }
 
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export async function processYoutubeUrl(
   videoUrl: string,
   language: string,
-  summaryLengthKey: string
+  summaryLengthKey: string,
+  attempt = 1
 ): Promise<{ summary: string; audioPath: string; s3Url?: string }> {
   const startTime = Date.now();
   loggers.video.info(
@@ -411,6 +417,10 @@ export async function processYoutubeUrl(
       s3Url: audioResult.s3Url // This will also be the signed URL
     };
   } catch (error) {
+    if (attempt >= MAX_ATTEMPTS) {
+      // After logging, rethrow the error without further retries
+      throw error instanceof Error ? error : new Error(String(error));
+    }
     const duration = Date.now() - startTime;
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
@@ -424,6 +434,7 @@ export async function processYoutubeUrl(
       'Video processing failed'
     );
 
-    throw error;
+    await delay(attempt * 1000); // Wait between attempts with simple backoff
+    return await processYoutubeUrl(videoUrl, language, summaryLengthKey, attempt + 1);
   }
 }
